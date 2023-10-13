@@ -1,0 +1,8 @@
+{
+    "server": "localhost",
+    "port": 27017,
+    "userName": "admin",
+    "password": "admin",
+    "authSource": "admin",
+    "dbName": "burnout"
+}
