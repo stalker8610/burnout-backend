@@ -1,4 +1,5 @@
-import { TObjectId, IEntityManager, type TWithId } from "./common.model.js"
+import { TObjectId, IEntityManager, type TWithId, IWithCompanyId } from "./common.model.js"
+import { IRespondent } from "./respondent.model.js";
 
 export enum Scopes {
     Admin = 'Admin',
@@ -6,13 +7,12 @@ export enum Scopes {
     User = 'User'
 }
 
-export interface IUser {
+export interface IUser extends IWithCompanyId {
     email: string,
     scope: Scopes,
     salt?: Buffer,
     hashed_password?: Buffer,
-    respondentId?: TObjectId,
-    companyId?: TObjectId
+    respondentId?: TObjectId<IRespondent>
 }
 
 

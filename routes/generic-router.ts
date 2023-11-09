@@ -1,4 +1,4 @@
-import express, { Request, Router } from 'express';
+import express, { Request, RequestHandler, Router } from 'express';
 import { IEntityManager, TObjectId } from '../models/common.model.js';
 import { Scopes } from '../models/user.model.js';
 
@@ -43,46 +43,51 @@ const scopeGuard = (scopeAccessRules: TScopeAccessRules) => {
     }
 }
 
-export class APIRouter {
+export class APIRouter<T> {
 
     private readonly router: Router;
+    private readonly scopeGuard: (req, res, next) => void;
 
-    constructor(private readonly path: string,
-        private readonly entityManager: IEntityManager<any/* , any */>,
+    constructor(
+        /* private readonly path: string, */
+        private readonly entityManager: IEntityManager<T/* , any */>,
         private readonly scopeAccessRules: TScopeAccessRules) {
 
         this.router = express.Router();
-        this.router.use(scopeGuard(this.scopeAccessRules));
+
+        this.scopeGuard = scopeGuard(this.scopeAccessRules);
+
 
         // retrieve all items
-        this.router.get(`/`, (req, res) => {
+        this.router.get(`/`, this.scopeGuard, (req, res) => {
             this.entityManager.getAll().then(result => res.status(200).json(result),
                 err => res.status(400).send(err));
         });
 
         //add new item
-        this.router.post(`/`, (req, res) => {
+        this.router.post(`/`, this.scopeGuard, (req, res) => {
             this.entityManager.create(req.body)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //get exact item
-        this.router.get(`/:_id`, (req, res) => {
-            this.entityManager.findById(req.params._id as TObjectId)
+        this.router.get(`/:_id`, this.scopeGuard, (req, res) => {
+            this.entityManager.findById(req.params._id as TObjectId<T>)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //update exact item
-        this.router.put(`/:_id`, (req, res) => {
-            this.entityManager.update(req.params._id as TObjectId, req.body)
+        this.router.put(`/:_id`, this.scopeGuard, (req, res) => {
+            this.entityManager.update(req.params._id as TObjectId<T>, req.body)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
-        this.router.delete(`/:_id`, (req, res) => {
-            this.entityManager.delete(req.params._id as TObjectId)
+        //delete exact item
+        this.router.delete(`/:_id`, this.scopeGuard, (req, res) => {
+            this.entityManager.delete(req.params._id as TObjectId<T>)
                 .then(() => res.sendStatus(200),
                     err => res.status(400).send(err));
         })

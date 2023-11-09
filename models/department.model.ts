@@ -1,10 +1,10 @@
-import { TObjectId, IEntityManager } from "./common.model.js"
+import { TObjectId, IEntityManager, IWithCompanyId } from "./common.model.js"
+import { IRespondent } from "./respondent.model.js"
 
-export interface IDepartment {
-    companyId: TObjectId,
+export interface IDepartment extends IWithCompanyId {
     title: string,
-    chiefId?: TObjectId,
-    parentDepartmentId?: TObjectId
+    chiefId?: TObjectId<IRespondent>,
+    parentDepartmentId?: TObjectId<IDepartment>
     //subDepartmentIds: TObjectId[],
 }
 

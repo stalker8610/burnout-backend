@@ -1,3 +1,4 @@
+import { isSameCompanyRequestGuard } from './routes/guards.js';
 import express from 'express';
 /* import Tokens from 'csrf'; */
 import passport from 'passport';
@@ -6,12 +7,7 @@ import * as path from 'path';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
 
-import { router as authRouter } from './routes/auth-router.js';
-import { router as mainRouter } from './routes/main-router.js';
-import { router as respondentsRouter } from './routes/respondents-router.js';
-import { router as departmentsRouter } from './routes/departments-router.js';
-import { router as companiesRouter } from './routes/companies-router.js';
-import { router as tokensRouter } from './routes/tokens-router.js';
+/* Остановился на том, что нужно параметр companyId перенести в use этот, а в генерик роутер передавать в виде замыкания */
 
 import { dbClientPromise, dbCloseConnection } from './dal/mongo/core.access.js';
 
@@ -28,28 +24,48 @@ const mongoStore = MongoStore.create({ clientPromise: dbClientPromise });
 
 app.use(session({
     secret: serverConfig.sessionSecret,
-    resave: true,
-    rolling: true,
+    resave: false,
+    //rolling: true,
     saveUninitialized: false, // don't create session until something stored
     store: mongoStore,
     cookie: {
-        maxAge: 10 * 60 * 1000,
+        //maxAge: 10 * 60 * 1000, //10 minutes
         httpOnly: false,
+        secure: false,
+        /* sameSite: 'lax' */
     },
 }));
 /* app.use(new Tokens()); */
+
+
+
+import { router as authRouter } from './routes/auth-router.js';
+
 app.use(passport.authenticate('session'));
+
+
+import { router as mainRouter } from './routes/main-router.js';
+import { router as respondentsRouter } from './routes/respondents-router.js';
+import { router as departmentsRouter } from './routes/departments-router.js';
+import { router as companiesRouter } from './routes/companies-router.js';
+import { router as tokensRouter } from './routes/tokens-router.js';
+import { router as surveysRouter } from './routes/surveys-router.js';
+import { router as reportsRouter } from './routes/reports-router.js';
+
 
 /* app.use(function (req, res, next) {
     res.locals.csrfToken = req.csrfToken();
     next();
 }); */
 
+
 app.use('/auth', authRouter);
 app.use('/tokens', tokensRouter);
-app.use('/respondents', respondentsRouter);
-app.use('/departments', departmentsRouter);
+app.use('/surveys', surveysRouter);
+app.use('/respondents/:companyId', respondentsRouter);
+app.use('/departments/:companyId', isSameCompanyRequestGuard, departmentsRouter);
 app.use('/companies', companiesRouter);
+app.use('/reports', reportsRouter);
 app.use('/', mainRouter);
 
 

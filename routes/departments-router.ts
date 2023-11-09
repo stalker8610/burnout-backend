@@ -9,13 +9,13 @@ const scopeAccessRules: TScopeAccessRules = {
     'GET': {
         'null': false,
         [Scopes.User]: false,
-        [Scopes.HR]: isSameCompanyRequest,
+        [Scopes.HR]: /* isSameCompanyRequest */true,
         [Scopes.Admin]: true,
     },
     'POST': {
         'null': false,
         [Scopes.User]: false,
-        [Scopes.HR]: isSameCompanyRequest,
+        [Scopes.HR]: isSameCompanyRequest, 
         [Scopes.Admin]: true,
     },
     'PUT': {
@@ -33,7 +33,7 @@ const scopeAccessRules: TScopeAccessRules = {
 }
 
 const entityManager = new DepartmentManager(dbClient);
-export const router = new APIRouter('departments/:companyId', entityManager, scopeAccessRules).getRouter();
+export const router = new APIRouter(/* 'departments/:companyId',  */entityManager, scopeAccessRules).getRouter();
 
 
 

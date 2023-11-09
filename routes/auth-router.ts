@@ -2,7 +2,6 @@
 import express from 'express';
 import passport from 'passport';
 import { Strategy as LocalStrategy, IVerifyOptions } from 'passport-local';
-import { ensureLoggedIn } from 'connect-ensure-login';
 
 import { SingupTokenManager } from '../dal/mongo/token.access.js';
 import { RespondentManager } from '../dal/mongo/respondent.access.js';
@@ -31,13 +30,15 @@ function verify(email: string, password: string,
     )
 }
 
+
+
 passport.use(new LocalStrategy({ usernameField: 'email' }, verify));
 
-passport.serializeUser(function (user: TWithId<IUser>, done) {
+passport.serializeUser((user: TWithId<IUser>, done) => {
     done(null, user._id);
 });
 
-passport.deserializeUser(function (_id: TObjectId, done) {
+passport.deserializeUser((_id: TObjectId<IUser>, done) => {
     userManager.findById(_id).then(
         userData => done(null, userData),
         err => done(err, false)
@@ -47,49 +48,47 @@ passport.deserializeUser(function (_id: TObjectId, done) {
 export const router = express.Router();
 
 router.post('/login',
-    (req, res, next) => {
-        console.log('login path entered');
-        next()
-    },
-    /* passport.authenticate('local', {
-        successReturnToOrRedirect: '/',
-        failureRedirect: '/login',
-        failureMessage: true
-    }) */
+    /*  passport.authenticate('local', {
+         //successReturnToOrRedirect: '/',
+         //failureRedirect: '/login',
+         failureMessage: true
+     }) */
 
     function (req, res, next) {
         // call passport authentication passing the "local" strategy name and a callback function
-        passport.authenticate('local', function (error, user, info) {
+        passport.authenticate('local', (error, user, info) => {
             // this will execute in any case, even if a passport strategy will find an error
             // log everything to console
             if (error) console.log(error);
-            if (user) console.log(user);
+            if (user) console.log('user=', user);
             if (info) console.log(info);
 
             if (error) {
-                res.status(401).send(error);
+                res.status(500).json(error);
             } else if (!user) {
-                res.status(401).send(info);
+                console.log(info);
+                res.status(401).json(info);
             } else {
-                req.login(user, function (error) {
+                req.login(user, error => {
                     if (error) {
-                        res.sendStatus(500);
+                        res.status(500).json(error);
                     } else {
-                        res.sendStatus(200);
+                        const partialUser = Object.assign({}, user) as TWithId<IUser>;
+                        delete partialUser.salt;
+                        delete partialUser.hashed_password;
+                        res.json(partialUser);
                     }
                 });
             }
         })(req, res);
     }
-
-
 );
 
 router.post('/register-admin-user', (req, res) => {
-    
+
     console.log('register-admin-user');
     const { email, password, scope } = req.body;
-    userManager.createUser({ email, password, scope }).then(
+    userManager.createUser({ email, password, scope, companyId: undefined }).then(
         () => res.sendStatus(200),
         err => res.status(400).send(err));
 });
@@ -99,12 +98,10 @@ router.post('/signup', async (req, res) => {
     console.log('signup');
     const { token, password } = req.body;
     try {
-        const tokenData = await tokenManager.findById(token)
-        if (!tokenData || tokenData.userId) {
-            throw `Token ${token} is invalid`;
-        }
 
+        const tokenData = await tokenManager.validateToken(token)
         const respondent = await respondentManager.findById(tokenData.respondentId);
+
         if (!respondent) {
             throw `Respondent with id ${tokenData.respondentId} for token ${token} not found`;
         }
@@ -118,7 +115,7 @@ router.post('/signup', async (req, res) => {
         }
 
         const user = await userManager.createUser(newUserData);
-        await tokenManager.update(token, { ...tokenData, userId: user._id });
+        await tokenManager.update(token, { userId: user._id });
 
         res.sendStatus(200);
 
@@ -127,10 +124,23 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-router.post('/logout', ensureLoggedIn, function (req, res, next) {
-    req.logout(function (err) {
-        if (err) { return next(err); }
-        res.redirect('/');
+router.get('/me', (req, res, next) => {
+    if (req.isAuthenticated()) {
+        const user = Object.assign({}, req.user) as TWithId<IUser>;
+        delete user.salt;
+        delete user.hashed_password;
+        res.json(user);
+    } else {
+        res.json(null);
+    }
+});
+
+router.post('/logout', (req, res, next) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        res.sendStatus(200);
     });
 });
 

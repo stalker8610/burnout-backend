@@ -1,7 +1,9 @@
-import { ObjectId, MongoClient, Collection, Db/* , OptionalId, Document *//* , TWithId */, Filter, OptionalId, OptionalUnlessRequiredId, WithId } from "mongodb";
+import { ObjectId, MongoClient, Collection, Db, Filter, OptionalId, OptionalUnlessRequiredId, WithId } from "mongodb";
 import { TObjectId } from "../../models/common.model.js";
-import { IEntityManager, type TWithId } from "../../models/common.model.js";
-import { dbName/* , projectIdOptions */ } from "./core.access.js";
+import { IEntityManager, type TWithId, IWithCompanyId } from "../../models/common.model.js";
+import { dbName } from "./core.access.js";
+import { errorMessage } from '../../util/util.js';
+import { ICompany } from "../../models/company.model.js";
 
 export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , RequiredT */>{
 
@@ -10,30 +12,39 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
 
     private cache = <Array<TWithId<T>>>[];
 
-    constructor(private readonly dbClient: MongoClient,
+    constructor(protected readonly dbClient: MongoClient,
         private readonly collectionName: string) {
 
-        this.collection = this.dbClient.db(dbName).collection(this.collectionName);
         this.db = this.dbClient.db(dbName);
+        this.collection = this.db.collection(this.collectionName);
+
     }
 
-    //async create(data: Partial<T> & RequiredT): Promise<TWithId<T>> {
     async create(data: T): Promise<TWithId<T>> {
-        //async create(data: Partial<T> & RequiredT): Promise<TObjectId> {
         try {
-            const newObjId = (await this.collection.insertOne(<OptionalUnlessRequiredId<OptionalId<T>>>data)).insertedId.toHexString();
-            return this.findById(newObjId);
-            //return (await this.collection.insertOne(data)).insertedId.toHexString();
+
+            const _id = new ObjectId().toHexString();
+            const dataWithId = {
+                ...data,
+                _id
+            }
+
+            //const newObjId = (await this.collection.insertOne(<OptionalUnlessRequiredId<OptionalId<T>>>dataWithId)).insertedId.toHexString();
+            //return this.findById(newObjId);
+
+            await this.collection.insertOne(<OptionalUnlessRequiredId<OptionalId<T>>>dataWithId);
+            return this.findById(_id);
+
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
     }
 
-    async findById(_id: TObjectId): Promise<TWithId<T>> {
+    async findById(_id: TObjectId<T>): Promise<TWithId<T>> {
         try {
             let result = this.cache.find(el => el._id === _id);
             if (!result) {
-                result = this.changeIdType(await this.collection.findOne(this.idFilter(_id)/* , projectIdOptions */));
+                result = this.changeIdType(await this.collection.findOne(this.idFilter(_id)));
                 if (result) {
                     this.cache.push(result);
                 } else {
@@ -42,16 +53,17 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
             }
             return result;
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
     }
 
     //async update(_id: TObjectId, data: TWithId<Partial<T>>): Promise<TWithId<T>> {
-    async update(_id: TObjectId, data: TWithId<T>): Promise<TWithId<T>> {
+    //async update(_id: TObjectId, data: TWithId<T>): Promise<TWithId<T>> {
+    async update(_id: TObjectId<T>, data: Partial<OptionalId<T>>): Promise<TWithId<T>> {
         const dataToUpdate = Object.assign({}, data);
         delete dataToUpdate._id;
         try {
-            const updateResult = await this.collection.updateOne(this.idFilter(_id), dataToUpdate);
+            const updateResult = await this.collection.updateOne(this.idFilter(_id), { $set: { ...dataToUpdate } });
             if (updateResult.modifiedCount === 1) {
                 const index = this.cache.findIndex(el => el._id === _id);
                 if (index !== -1) {
@@ -61,12 +73,12 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
             }
             throw `Object with _id ${_id} not found`;
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
 
     }
 
-    async delete(_id: TObjectId): Promise<true> {
+    async delete(_id: TObjectId<T>): Promise<true> {
         try {
             if ((await this.collection.deleteOne(this.idFilter(_id))).deletedCount === 1) {
                 const index = this.cache.findIndex(el => el._id === _id);
@@ -77,27 +89,48 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
             }
             throw `Object with _id ${_id} not found`;
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
     }
 
     async getAll(): Promise<TWithId<T>[]> {
         try {
-            return (await this.collection.find().toArray()).map(el => this.changeIdType(el));
+            const result = await this.collection.find().toArray();
+            return result.map(el => this.changeIdType(el));
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
     }
 
-    private changeIdType(entity: WithId<OptionalId<T>>): TWithId<T> {
-        return entity && {
+    protected changeIdType(entity: WithId<OptionalId<T>>): TWithId<T> {
+        return entity as TWithId<T>;
+        /* return entity && {
             ...entity,
             _id: entity._id.toHexString()
-        } as TWithId<T>
+        } as TWithId<T> */
     }
 
     private idFilter(_id) {
-        return { _id: new ObjectId(_id) } as Filter<OptionalId<T>>;
+        //return { _id: new ObjectId(_id) } as Filter<OptionalId<T>>;
+        return { _id } as Filter<OptionalId<T>>;
+    }
+
+}
+
+export class CompanyRelatedEntityManager<T extends IWithCompanyId> extends EntityManager<T> {
+
+    constructor(dbClient: MongoClient, collectionName: string) {
+        super(dbClient, collectionName);
+    }
+
+    async getAllByCompany(companyId: TObjectId<ICompany>): Promise<TWithId<T>[]> {
+        try {
+            const filter = { companyId } as any;
+            const result = await this.collection.find(filter).toArray();
+            return result.map(el => this.changeIdType(el));
+        } catch (e) {
+            return Promise.reject(errorMessage(e));
+        }
     }
 
 }

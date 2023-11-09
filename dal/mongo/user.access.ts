@@ -1,10 +1,11 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import crypto from 'crypto';
 import { IUser, /* TUserRequired,  */IUserManager } from "../../models/user.model.js";
 /* import { projectIdOptions } from "./core.access.js"; */
 import { TObjectId, TWithId } from "../../models/common.model.js";
 import { EntityManager } from "./common.access.js";
 import { IRespondent } from "../../models/respondent.model.js";
+import { errorMessage } from '../../util/util.js';
 
 export class UserManager extends EntityManager<IUser/* , TUserRequired */> implements IUserManager {
 
@@ -33,7 +34,7 @@ export class UserManager extends EntityManager<IUser/* , TUserRequired */> imple
                 return this.create(newUserData);
             }
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
     }
 

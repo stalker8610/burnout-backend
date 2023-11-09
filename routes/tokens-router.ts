@@ -2,13 +2,7 @@ import { APIRouter } from "./generic-router.js";
 import { SingupTokenManager } from "../dal/mongo/token.access.js";
 import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
-import { isSelfRequest, isSameCompanyRequest, isSameCompanyRequestGuard } from "./guards.js";
 import { Scopes } from "../models/user.model.js";
-
-/* const initialSignUp = (req) => {
-    //token should be provided in request
-    return (req.params.signUpToken);
-} */
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -38,6 +32,12 @@ const scopeAccessRules: TScopeAccessRules = {
 }
 
 const entityManager = new SingupTokenManager(dbClient);
-export const router = new APIRouter('/tokens', entityManager, scopeAccessRules).getRouter();
+export const router = new APIRouter(/* '/tokens',  */entityManager, scopeAccessRules).getRouter();
 
+router.get('/validate/:_id', (req, res) => {
+    entityManager.validateToken(req.params._id)
+        .then(
+            () => res.sendStatus(200),
+            err => res.status(400).send(err));
+})
 

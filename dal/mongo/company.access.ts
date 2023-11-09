@@ -1,30 +1,45 @@
+import { errorMessage } from './../../util/util.js';
 import { MongoClient } from "mongodb";
-import { ICompany/* , TCompanyRequired */, ICompanyManager, ICompanyStructure } from "../../models/company.model.js";
-import { TObjectId, TWithId } from "../../models/common.model.js";
+import { ICompany, ICompanyManager, ICompanyStructure } from "../../models/company.model.js";
 import { EntityManager } from "./common.access.js";
 
-export class CompanyManager extends EntityManager<ICompany/* , TCompanyRequired */> implements ICompanyManager {
+export class CompanyManager extends EntityManager<ICompany> implements ICompanyManager {
     constructor(dbClient: MongoClient) {
         super(dbClient, 'Companies');
     }
 
-    returnCompanyStructure(companyId: TObjectId): Promise<ICompanyStructure> {
-
-        return Promise.resolve({});
-
-        /* return this.db.collection('Departments').aggregate<TWithId<IRespondent>>([
-            {
-                "$match": { companyId }
-            },
-            {
-                "$lookup": {
-                    from: this.collection,
-                    localField: '_id',
-                    foreignField: 'departmentId',
-                    as: 'respondents'
+    async getCompanyStructure(companyId: string): Promise<ICompanyStructure> {
+        try {
+            const result = await this.collection.aggregate([
+                { $match: { _id: companyId } },
+                {
+                    $lookup: {
+                        from: 'Departments',
+                        localField: '_id',
+                        foreignField: 'companyId',
+                        as: 'departments',
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'Respondents',
+                        localField: '_id',
+                        foreignField: 'companyId',
+                        as: 'team',
+                    }
+                },
+                {
+                    $project: {
+                        '_id': 0,
+                        'team.companyId': 0,
+                        'departments.companyId': 0
+                    }
                 }
-            }
-        ]).toArray(); */
+            ]).toArray() as ICompanyStructure[];
+            return result[0];
+        } catch (e) {
+            return Promise.reject(errorMessage(e));
+        }
 
     }
 }

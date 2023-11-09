@@ -4,6 +4,7 @@ import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
 import { isSameCompanyRequest } from "./guards.js";
 import { Scopes } from "../models/user.model.js";
+import { isSameCompanyRequestGuard } from "./guards.js";
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -33,8 +34,14 @@ const scopeAccessRules: TScopeAccessRules = {
 }
 
 const entityManager = new CompanyManager(dbClient);
-export const router = new APIRouter('companies', entityManager, scopeAccessRules).getRouter();
+export const router = new APIRouter(/* 'companies',  */entityManager, scopeAccessRules).getRouter();
 
+router.get('/:companyId/structure', /* isSameCompanyRequestGuard, */ (req, res) => {
+    entityManager.getCompanyStructure(req.params.companyId)
+        .then(
+            (data) => res.json(data),
+            err => res.status(400).send(err));
+});
 
 
 

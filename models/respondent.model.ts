@@ -1,5 +1,7 @@
 import { Scopes } from "../models/user.model.js"
-import { TObjectId, IEntityManager, TWithId } from "./common.model.js"
+import { TObjectId, IEntityManager, TWithId, IWithCompanyId } from "./common.model.js"
+import { ICompany } from "./company.model.js"
+import { IDepartment } from "./department.model.js"
 
 export enum SignUpStatus {
     NotInvitedYet = 'NotInvitedYet',
@@ -7,14 +9,13 @@ export enum SignUpStatus {
     SingedUp = 'SignedUp'
 }
 
-export interface IRespondent {
-    companyId: TObjectId
+export interface IRespondent extends IWithCompanyId  {
     firstName: string,
     lastName: string,
     middleName?: string,
     email: string,
     birthDate?: Date,
-    departmentId?: TObjectId,
+    departmentId?: TObjectId<IDepartment>,
     position?: string,
     isRemote?: boolean,
     isActive?: boolean,

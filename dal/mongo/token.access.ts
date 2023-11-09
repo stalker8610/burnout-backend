@@ -1,7 +1,8 @@
 import { ISignupToken, ISignupTokenManager } from '../../models/token.model.js';
 import { MongoClient, ObjectId } from "mongodb";
-import { TObjectId, TWithId } from "../../models/common.model.js";
+import { TObjectId } from "../../models/common.model.js";
 import { EntityManager } from "./common.access.js";
+import { errorMessage } from '../../util/util.js';
 
 export class SingupTokenManager extends EntityManager<ISignupToken/* , TUserRequired */> implements ISignupTokenManager {
 
@@ -9,20 +10,19 @@ export class SingupTokenManager extends EntityManager<ISignupToken/* , TUserRequ
         super(dbClient, 'IssuedSignupTokens');
     }
 
-/*     async isTokenValid(token: ISignupToken['token']): Promise<ISignupToken> {
+    async validateToken(_id: TObjectId<ISignupToken>): Promise<ISignupToken> {
         try {
-            return await this.collection.findOne({ token });
-            throw `Token ${data.token} is invalid`;
+            const tokenData = await this.findById(_id)
+            if (!tokenData) {
+                throw `Token ${_id} is invalid`;
+            }
+            if (tokenData.userId) {
+                throw `The token ${_id} has already been used`;
+            }
+            return tokenData;
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(errorMessage(e));
         }
-    } */
-
-    /* async issueToken({ respondentId }: Pick<ISignupToken, 'respondentId'>): Promise<TWithId<ISignupToken>> {
-        return this.create({
-            respondentId,
-            token: new ObjectId().toHexString()
-        })
-    } */
-
+    }
+  
 }
