@@ -35,7 +35,7 @@ const scopeAccessRules: TScopeAccessRules = {
 const surveyManager = new SurveyManager(dbClient);
 const surveyResultManager = new SurveyResultManager(dbClient);
 
-export const router = new APIRouter(/* '/survey',  */surveyManager, scopeAccessRules).getRouter();
+export const router = new APIRouter('', surveyManager, scopeAccessRules).getRouter();
 
 router.post('/generate/:companyId/:respondentId', (req, res) => {
     console.log(req.params.respondentId, req.params.companyId);

@@ -30,7 +30,6 @@ export class CompanyManager extends EntityManager<ICompany> implements ICompanyM
                 },
                 {
                     $project: {
-                        '_id': 0,
                         'team.companyId': 0,
                         'departments.companyId': 0
                     }

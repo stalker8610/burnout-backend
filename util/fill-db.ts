@@ -181,8 +181,17 @@ const generateSurvey = async (company: TWithId<ICompany>, respondent: TWithId<IR
     console.log(survey);
 }
 
+const dropCollections = async (collectionNames: Array<string>) => {
+    for await (let collection of collectionNames) {
+        dbClient.db('burnout').collection(collection).drop();
+    }
+}
+
 
 (async () => {
+
+    await dropCollections(['Users', 'Respondents', 'Departments', 'Companies']);
+
 
     let userAdmin = await dbClient.db('burnout').collection('Users').findOne({ scope: Scopes.Admin }) as any as TWithId<IUser>;
     if (!userAdmin) {

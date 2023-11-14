@@ -33,7 +33,7 @@ const scopeAccessRules: TScopeAccessRules = {
 }
 
 const entityManager = new DepartmentManager(dbClient);
-export const router = new APIRouter(/* 'departments/:companyId',  */entityManager, scopeAccessRules).getRouter();
+export const router = new APIRouter('/:companyId', entityManager, scopeAccessRules).getRouter();
 
 
 

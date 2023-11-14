@@ -49,7 +49,7 @@ export class APIRouter<T> {
     private readonly scopeGuard: (req, res, next) => void;
 
     constructor(
-        /* private readonly path: string, */
+        private readonly basePath: string,
         private readonly entityManager: IEntityManager<T/* , any */>,
         private readonly scopeAccessRules: TScopeAccessRules) {
 
@@ -59,36 +59,36 @@ export class APIRouter<T> {
 
 
         // retrieve all items
-        this.router.get(`/`, this.scopeGuard, (req, res) => {
+        this.router.get(`${this.basePath}/`, this.scopeGuard, (req, res) => {
             this.entityManager.getAll().then(result => res.status(200).json(result),
                 err => res.status(400).send(err));
         });
 
         //add new item
-        this.router.post(`/`, this.scopeGuard, (req, res) => {
+        this.router.post(`${this.basePath}/`, this.scopeGuard, (req, res) => {
             this.entityManager.create(req.body)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //get exact item
-        this.router.get(`/:_id`, this.scopeGuard, (req, res) => {
+        this.router.get(`${this.basePath}/:_id`, this.scopeGuard, (req, res) => {
             this.entityManager.findById(req.params._id as TObjectId<T>)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //update exact item
-        this.router.put(`/:_id`, this.scopeGuard, (req, res) => {
+        this.router.put(`${this.basePath}/:_id`, this.scopeGuard, (req, res) => {
             this.entityManager.update(req.params._id as TObjectId<T>, req.body)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //delete exact item
-        this.router.delete(`/:_id`, this.scopeGuard, (req, res) => {
+        this.router.delete(`${this.basePath}/:_id`, this.scopeGuard, (req, res) => {
             this.entityManager.delete(req.params._id as TObjectId<T>)
-                .then(() => res.sendStatus(200),
+                .then(() => res.json({ _id: req.params._id }),
                     err => res.status(400).send(err));
         })
 

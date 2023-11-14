@@ -32,7 +32,7 @@ const scopeAccessRules: TScopeAccessRules = {
 }
 
 const entityManager = new SingupTokenManager(dbClient);
-export const router = new APIRouter(/* '/tokens',  */entityManager, scopeAccessRules).getRouter();
+export const router = new APIRouter('', entityManager, scopeAccessRules).getRouter();
 
 router.get('/validate/:_id', (req, res) => {
     entityManager.validateToken(req.params._id)
