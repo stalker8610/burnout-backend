@@ -10,5 +10,6 @@ export interface ISignupToken {
 }
 
 export interface ISignupTokenManager extends IEntityManager<ISignupToken> {
+    issueToken(data: ISignupToken, inviterId: TObjectId<IRespondent>): Promise<TWithId<ISignupToken>>;
     validateToken(_id: TObjectId<ISignupToken>): Promise<ISignupToken>;
 }

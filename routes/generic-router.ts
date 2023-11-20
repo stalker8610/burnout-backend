@@ -23,6 +23,10 @@ Examples:
 
 export type TScopeAccessRules = Record<TRequestMethod, Record<Scopes | 'null', boolean | ((req: Request) => boolean)>>;
 
+type TMethod = "get:all" | "get" | "post" | "put" | "delete";
+
+export type TMethodGuards = { [key in TMethod]?: RequestHandler }
+
 const scopeGuard = (scopeAccessRules: TScopeAccessRules) => {
     return (req, res, next) => {
         const rules = scopeAccessRules[req.method];
@@ -51,7 +55,8 @@ export class APIRouter<T> {
     constructor(
         private readonly basePath: string,
         private readonly entityManager: IEntityManager<T/* , any */>,
-        private readonly scopeAccessRules: TScopeAccessRules) {
+        private readonly scopeAccessRules: TScopeAccessRules,
+        private readonly additionalGuards?: TMethodGuards) {
 
         this.router = express.Router();
 
@@ -59,34 +64,34 @@ export class APIRouter<T> {
 
 
         // retrieve all items
-        this.router.get(`${this.basePath}/`, this.scopeGuard, (req, res) => {
+        this.router.get(`${this.basePath}/`, this.scopeGuard, this.getMethodGuard("get:all"), (req, res) => {
             this.entityManager.getAll().then(result => res.status(200).json(result),
                 err => res.status(400).send(err));
         });
 
         //add new item
-        this.router.post(`${this.basePath}/`, this.scopeGuard, (req, res) => {
+        this.router.post(`${this.basePath}/`, this.scopeGuard, this.getMethodGuard("post"), (req, res) => {
             this.entityManager.create(req.body)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //get exact item
-        this.router.get(`${this.basePath}/:_id`, this.scopeGuard, (req, res) => {
+        this.router.get(`${this.basePath}/:_id`, this.scopeGuard, this.getMethodGuard("get"), (req, res) => {
             this.entityManager.findById(req.params._id as TObjectId<T>)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //update exact item
-        this.router.put(`${this.basePath}/:_id`, this.scopeGuard, (req, res) => {
+        this.router.put(`${this.basePath}/:_id`, this.scopeGuard, this.getMethodGuard("put"), (req, res) => {
             this.entityManager.update(req.params._id as TObjectId<T>, req.body)
                 .then(result => res.status(200).json(result),
                     err => res.status(400).send(err));
         });
 
         //delete exact item
-        this.router.delete(`${this.basePath}/:_id`, this.scopeGuard, (req, res) => {
+        this.router.delete(`${this.basePath}/:_id`, this.scopeGuard, this.getMethodGuard("delete"), (req, res) => {
             this.entityManager.delete(req.params._id as TObjectId<T>)
                 .then(() => res.json({ _id: req.params._id }),
                     err => res.status(400).send(err));
@@ -96,6 +101,11 @@ export class APIRouter<T> {
 
     getRouter() {
         return this.router;
+    }
+
+    getMethodGuard(method: TMethod) {
+        const emptyRequestHandler = (req, res, next) => next();
+        return this.additionalGuards?.[method] || emptyRequestHandler
     }
 
 }

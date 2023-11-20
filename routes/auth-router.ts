@@ -10,6 +10,7 @@ import { UserManager } from '../dal/mongo/user.access.js';
 import { dbClient } from '../dal/mongo/core.access.js';
 import { IUser } from '../models/user.model.js';
 import { TWithId, TObjectId } from '../models/common.model.js';
+import { IRespondent, SignUpStatus } from '../models/respondent.model.js';
 
 const userManager = new UserManager(dbClient);
 const tokenManager = new SingupTokenManager(dbClient);
@@ -20,16 +21,19 @@ function verify(email: string, password: string,
 
     userManager.findByEmail(email).then(
         userData => {
-            if (!userData) { return done(null, false, { message: 'Incorrect username or password.' }); }
-            if (!userManager.checkPassword(userData, password)) {
+            if (!userData) {
+                return done(null, false, { message: 'Incorrect username or password.' });
+            } else if (userData.disabled) {
+                return done(null, false, { message: 'The account is disabled' });
+            } else if (!userManager.checkPassword(userData, password)) {
                 return done(null, false, { message: 'Incorrect username or password.' })
+            } else {
+                return done(null, userData);
             }
-            return done(null, userData);
         },
         err => done(err)
     )
 }
-
 
 
 passport.use(new LocalStrategy({ usernameField: 'email' }, verify));
@@ -99,7 +103,7 @@ router.post('/signup', async (req, res) => {
     const { token, password } = req.body;
     try {
 
-        const tokenData = await tokenManager.validateToken(token)
+        const tokenData = await tokenManager.validateToken(token);
         const respondent = await respondentManager.findById(tokenData.respondentId);
 
         if (!respondent) {
@@ -116,6 +120,7 @@ router.post('/signup', async (req, res) => {
 
         const user = await userManager.createUser(newUserData);
         await tokenManager.update(token, { userId: user._id });
+        await respondentManager.update(tokenData.respondentId, { signUpStatus: SignUpStatus.SingedUp });
 
         res.sendStatus(200);
 
@@ -124,9 +129,10 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-router.get('/me', (req, res, next) => {
+router.get('/me', async (req, res, next) => {
     if (req.isAuthenticated()) {
-        const user = Object.assign({}, req.user) as TWithId<IUser>;
+        const respondent = await respondentManager.findById((req.user as TWithId<IUser>).respondentId);
+        const user = Object.assign({}, req.user, { respondent }) as TWithId<IUser> & { respondent: TWithId<IRespondent> };
         delete user.salt;
         delete user.hashed_password;
         res.json(user);

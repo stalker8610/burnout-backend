@@ -12,18 +12,16 @@ export interface IUser extends IWithCompanyId {
     scope: Scopes,
     salt?: Buffer,
     hashed_password?: Buffer,
-    respondentId?: TObjectId<IRespondent>
+    respondentId?: TObjectId<IRespondent>,
+    disabled?: true
 }
-
 
 
 /* export type TUserRequired = Pick<IUser, 'email' | 'scope' | 'respondentId' | 'companyId'>; */
 
 export interface IUserManager extends IEntityManager<IUser/* , TUserRequired */> {
     findByEmail(email: string): Promise<TWithId<IUser>>;
-    //createUser(data: TUserRequired & { password: string }): Promise<TObjectId>;
-    //createUser(data: TUserRequired & { password: string }): Promise<TWithId<IUser>>;
-    //signUp(respondentId: TObjectId, token: TObjectId, password: string): Promise<TWithId<IUser>>;
+    findByRespondentId(id: TObjectId<IRespondent>): Promise<TWithId<IUser>>;
     createUser(data: IUser & { password: string }): Promise<TWithId<IUser>>;
     checkPassword(user: IUser, password: string): boolean;
 }

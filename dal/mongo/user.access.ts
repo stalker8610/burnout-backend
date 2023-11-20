@@ -43,4 +43,16 @@ export class UserManager extends EntityManager<IUser/* , TUserRequired */> imple
         return crypto.timingSafeEqual(Buffer.from(user.hashed_password.buffer), hashed_password);
     }
 
+    async findByRespondentId(id: TObjectId<IRespondent>): Promise<TWithId<IUser>> {
+        try {
+            const result = await this.collection.findOne({ respondentId: id }) as unknown as Promise<TWithId<IUser>>;
+            if (!result) {
+                throw `User with respondentId=${id} not found`;
+            }
+            return result;
+        } catch (e) {
+            return Promise.reject(errorMessage(e));
+        }
+    }
+
 }

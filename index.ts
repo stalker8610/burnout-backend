@@ -1,4 +1,3 @@
-import { isSameCompanyRequestGuard } from './routes/guards.js';
 import express from 'express';
 /* import Tokens from 'csrf'; */
 import passport from 'passport';
@@ -6,8 +5,6 @@ import cookieParser from 'cookie-parser';
 import * as path from 'path';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
-
-/* Остановился на том, что нужно параметр companyId перенести в use этот, а в генерик роутер передавать в виде замыкания */
 
 import { dbClientPromise, dbCloseConnection } from './dal/mongo/core.access.js';
 
@@ -59,13 +56,13 @@ import { router as reportsRouter } from './routes/reports-router.js';
 }); */
 
 
-app.use('/auth', authRouter);
-app.use('/tokens', tokensRouter);
-app.use('/surveys', surveysRouter);
-app.use('/respondents', respondentsRouter);
-app.use('/departments', departmentsRouter);
-app.use('/companies', companiesRouter);
-app.use('/reports', reportsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/tokens', tokensRouter);
+app.use('/api/surveys', surveysRouter);
+app.use('/api/respondents', respondentsRouter);
+app.use('/api/departments', departmentsRouter);
+app.use('/api/companies', companiesRouter);
+app.use('/api/reports', reportsRouter);
 app.use('/', mainRouter);
 
 

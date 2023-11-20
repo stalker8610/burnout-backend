@@ -7,7 +7,7 @@ import { DepartmentManager } from '../dal/mongo/department.access.js';
 import { IUser, Scopes } from '../models/user.model.js';
 import { ICompany } from '../models/company.model.js';
 import { IDepartment } from '../models/department.model.js';
-import { IRespondent } from '../models/respondent.model.js';
+import { IRespondent, SignUpStatus } from '../models/respondent.model.js';
 import { SurveyManager } from '../dal/mongo/survey.access.js';
 
 const companyManager = new CompanyManager(dbClient);
@@ -141,6 +141,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxHR._id
     })
+    respondentManager.update(respAlxHR._id, {signUpStatus: SignUpStatus.SingedUp});
 
     const alxUser1 = await userManager.createUser({
         email: respAlxUser1.email,
@@ -149,6 +150,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxUser1._id
     })
+    respondentManager.update(respAlxUser1._id, {signUpStatus: SignUpStatus.SingedUp});
 
     const alxUser2 = await userManager.createUser({
         email: respAlxUser2.email,
@@ -157,6 +159,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxUser2._id
     })
+    respondentManager.update(respAlxUser2._id, {signUpStatus: SignUpStatus.SingedUp});
 
     const alxUser3 = await userManager.createUser({
         email: respAlxUser3.email,
@@ -165,6 +168,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxUser3._id
     })
+    respondentManager.update(respAlxUser3._id, {signUpStatus: SignUpStatus.SingedUp});
 
     console.log(`\ncreateUsersAlx:`);
     console.log(alxUserHR);

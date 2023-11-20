@@ -5,6 +5,7 @@ import { TScopeAccessRules } from "./generic-router.js";
 import { isSameCompanyRequest } from "./guards.js";
 import { Scopes } from "../models/user.model.js";
 import { isSameCompanyRequestGuard } from "./guards.js";
+import { TMethodGuards } from "./generic-router.js";
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -34,7 +35,10 @@ const scopeAccessRules: TScopeAccessRules = {
 }
 
 const entityManager = new CompanyManager(dbClient);
-export const router = new APIRouter('', entityManager, scopeAccessRules).getRouter();
+
+const guards: TMethodGuards = { }
+
+export const router = new APIRouter('', entityManager, scopeAccessRules, guards).getRouter();
 
 router.get('/:companyId/structure', isSameCompanyRequestGuard, (req, res) => {
     entityManager.getCompanyStructure(req.params.companyId)

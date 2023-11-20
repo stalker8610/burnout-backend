@@ -14,7 +14,7 @@ const scopeAccessRules: TScopeAccessRules = {
     'POST': {
         'null': false,
         [Scopes.User]: false,
-        [Scopes.HR]: true,
+        [Scopes.HR]: false,
         [Scopes.Admin]: true,
     },
     'PUT': {
@@ -38,6 +38,14 @@ router.get('/validate/:_id', (req, res) => {
     entityManager.validateToken(req.params._id)
         .then(
             () => res.sendStatus(200),
+            err => res.status(400).send(err));
+})
+
+router.post('/issue', (req, res) => {
+    const { tokenData, inviterId } = req.body;
+    entityManager.issueToken(tokenData, inviterId)
+        .then(
+            token => res.json(token),
             err => res.status(400).send(err));
 })
 
