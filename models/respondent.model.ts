@@ -1,6 +1,5 @@
 import { Scopes } from "../models/user.model.js"
 import { TObjectId, IEntityManager, TWithId, IWithCompanyId } from "./common.model.js"
-import { ICompany } from "./company.model.js"
 import { IDepartment } from "./department.model.js"
 
 export enum SignUpStatus {

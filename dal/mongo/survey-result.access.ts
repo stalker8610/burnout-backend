@@ -7,15 +7,20 @@ import { SurveyManager } from "./survey.access.js";
 import { errorMessage } from "../../util/util.js";
 import { ISurvey } from "../../models/survey.model.js";
 
+import { SurveyProgressManager } from "./survey-progress.access.js";
+
+
 export class SurveyResultManager extends EntityManager<ISurveyResult> implements ISurveyResultManager {
 
     private respondentManager: RespondentManager;
-    private surveyManager: SurveyManager
+    private surveyManager: SurveyManager;
+    private surveyProgressManager: SurveyProgressManager;
 
     constructor(dbClient: MongoClient) {
         super(dbClient, 'SurveyResults');
         this.respondentManager = new RespondentManager(dbClient);
         this.surveyManager = new SurveyManager(dbClient);
+        this.surveyProgressManager = new SurveyProgressManager(this.dbClient);
     }
 
     override async create(data: ISurveyResult): Promise<TWithId<ISurveyResult>> {
@@ -27,10 +32,16 @@ export class SurveyResultManager extends EntityManager<ISurveyResult> implements
             const dataToSave = {
                 ...data,
                 companyId: respondent.companyId,
-                departmentId: respondent.departmentId
+                departmentId: respondent.departmentId,
             }
 
-            return super.create(dataToSave);
+            if (!('anonymous' in data) || !data.anonymous) {
+                dataToSave['respondentId'] = respondent._id;
+            }
+
+            const entity = super.create(dataToSave);
+            this.surveyProgressManager.makeProgress(data.surveyId);
+            return entity;
 
         } catch (e) {
             return Promise.reject(errorMessage(e));
@@ -39,19 +50,21 @@ export class SurveyResultManager extends EntityManager<ISurveyResult> implements
 
     async confirmAnswer(surveyId: TObjectId<ISurvey>, data: ISurveyResultConfirmedAnswer): Promise<true> {
         try {
-            const entity: ISurveyResultConfirmedAnswer = {
+            const entity = {
                 surveyId,
                 questionId: data.questionId,
                 date: new Date(),
-                answer: data.answer
+                answer: data.answer,
+                anonymous: data.anonymous
             }
 
-            if (data.anonymous) {
-                entity.anonymous = true;
+            if (!entity.anonymous) {
+                delete entity.anonymous
             }
 
-            await this.create(entity);
+            this.create(entity);
             return true;
+
         } catch (e) {
             return Promise.reject(errorMessage(e));
         }
@@ -59,6 +72,7 @@ export class SurveyResultManager extends EntityManager<ISurveyResult> implements
 
     async skipQuestion(surveyId: TObjectId<ISurvey>, data: ISurveyResultSkippedQuestion): Promise<true> {
         try {
+            const survey = await this.surveyManager.findById(surveyId);
             const entity: ISurveyResultSkippedQuestion = {
                 surveyId,
                 questionId: data.questionId,

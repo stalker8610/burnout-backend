@@ -1,7 +1,7 @@
 import { ICompany } from './../../../models/company.model.js';
 import { TObjectId } from './../../../models/common.model.js';
 import { MongoClient, Db } from "mongodb";
-import { IReportWallManager, IReportWallRecord } from "../../../models/reports/report-wall.js";
+import { IReportWallManager, IReportWallRecord } from "../../../models/reports/report-wall.model.js";
 import { dbName } from "../core.access.js";
 import { errorMessage } from '../../../util/util.js';
 
@@ -40,7 +40,8 @@ export class ReportWallManager implements IReportWallManager {
                     '_id': 0,
                     'date': '$answers.date',
                     'mood': '$answers.answer.mood',
-                    'text': '$answers.answer.text'
+                    'text': '$answers.answer.text',
+                    'respondentId': '$answers.respondentId'
                 }}
             ]).toArray() as IReportWallRecord[];
             return result;

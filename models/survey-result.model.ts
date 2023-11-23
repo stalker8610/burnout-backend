@@ -32,8 +32,6 @@ type TAnswerCompany = {
     score: number
 }
 
-
-
 type TAnswerPersonal = {
     newcomer: true
 } | {
@@ -73,3 +71,4 @@ export interface ISurveyResultManager extends IEntityManager<ISurveyResult> {
     confirmAnswer(surveyId: TObjectId<ISurvey>, data: ISurveyResultConfirmedAnswer): Promise<true>;
     skipQuestion(surveyId: TObjectId<ISurvey>, data: ISurveyResultSkippedQuestion): Promise<true>;
 }
+

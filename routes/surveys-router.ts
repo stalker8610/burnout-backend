@@ -37,6 +37,13 @@ const surveyResultManager = new SurveyResultManager(dbClient);
 
 export const router = new APIRouter('', surveyManager, scopeAccessRules).getRouter();
 
+router.get('/respondent/:respondentId', (req, res) => {
+    surveyManager.getLastForRespondent(req.params.respondentId)
+        .then(
+            survey => res.status(200).json(survey),
+            err => res.status(400).send(err));
+});
+
 router.post('/generate/:companyId/:respondentId', (req, res) => {
     console.log(req.params.respondentId, req.params.companyId);
     surveyManager.generateSurvey(req.params.respondentId, req.params.companyId)
@@ -49,7 +56,7 @@ router.post('/:surveyId/complete', (req, res) => {
     console.log('survey completed');
     surveyManager.completeSurvey(req.params.surveyId)
         .then(
-            () => res.sendStatus(200),
+            survey => res.status(200).json(survey),
             err => res.status(400).send(err));
 });
 

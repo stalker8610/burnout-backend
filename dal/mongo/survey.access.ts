@@ -1,31 +1,41 @@
+import { RespondentManager } from './respondent.access.js';
 import { MongoClient } from "mongodb";
 import { ISurvey, ISurveyManager, IQuestion, TQuestionType } from "../../models/survey.model.js";
-import { TObjectId, TWithId } from "../../models/common.model.js";
+import { IEntityManager, TObjectId, TWithId } from "../../models/common.model.js";
 import { CompanyRelatedEntityManager, EntityManager } from "./common.access.js";
 import { errorMessage } from '../../util/util.js';
 import { IRespondent } from "../../models/respondent.model.js";
 import { ICompany } from "../../models/company.model.js";
-
+import { SurveyProgressManager } from "./survey-progress.access.js";
 
 export class SurveyManager extends EntityManager<ISurvey> implements ISurveyManager {
 
     private questionsCache: Partial<Record<TQuestionType, TWithId<IQuestion>[]>> = {};
+    private questionEntityManager: IEntityManager<IQuestion>;
+    private surveyProgressManager: SurveyProgressManager;
+    private respondentManager: RespondentManager;
+    
 
     constructor(dbClient: MongoClient) {
         super(dbClient, 'Surveys');
+        this.questionEntityManager = new EntityManager<IQuestion>(this.dbClient, 'Questions');
+        this.surveyProgressManager = new SurveyProgressManager(this.dbClient);
+        this.respondentManager = new RespondentManager(this.dbClient);
     }
 
     override async findById(_id: TObjectId<ISurvey>): Promise<TWithId<ISurvey>> {
         try {
             const result = await super.findById(_id);
-            const questionEntityManager = new EntityManager<IQuestion>(this.dbClient, 'Questions');
             const questionBodies = await Promise.all(
-                result.questions.map((question: TWithId<{}>) => questionEntityManager.findById(question._id))
+                result.questions.map((question: TWithId<{}>) => this.questionEntityManager.findById(question._id))
             );
 
             questionBodies.forEach((question: TWithId<IQuestion>, index) => {
                 result.questions[index] = question;
             });
+
+            //get survey progress to avoid duplicate answers
+            result.progress = await this.surveyProgressManager.getSurveyProgress(_id);
 
             return result;
         } catch (e) {
@@ -46,7 +56,11 @@ export class SurveyManager extends EntityManager<ISurvey> implements ISurveyMana
         const oneWeekLater = new Date(now);
         oneWeekLater.setDate(oneWeekLater.getDate() + 7); //have 7 days to complete survey
 
+        const respondent = await this.respondentManager.findById(respondentId);
+
         const survey: ISurvey = {
+            companyId,
+            departmentId: respondent.departmentId,
             respondentId,
             feedbackToId: teammate?._id,
             createdAt: now,
@@ -130,15 +144,42 @@ export class SurveyManager extends EntityManager<ISurvey> implements ISurveyMana
         }
     }
 
-    async completeSurvey(surveyId: TObjectId<ISurvey>): Promise<true> {
+    async completeSurvey(surveyId: TObjectId<ISurvey>): Promise<TWithId<ISurvey>> {
         try {
             await this.update(surveyId, { finishedAt: new Date() });
-            return true;
+            return this.findById(surveyId);
         } catch (e) {
             return Promise.reject(errorMessage(e));
         }
     }
 
-    
+    async getLastForRespondent(respondentId: string): Promise<TWithId<ISurvey> | null> {
+        try {
+            const result = await this.collection.aggregate([
+                {
+                    $match: {
+                        respondentId,
+                        expiredAt: {
+                            $gt: new Date()
+                        }
+                    },
+                },
+                {
+                    $sort: {
+                        createdAt: -1
+                    }
+                },
+                {
+                    $limit: 1
+                }]).toArray() as TWithId<ISurvey>[];
 
+            if (result.length && !result[0].finishedAt) {
+                return this.findById(result[0]._id);
+            }
+            return null;
+        } catch (e) {
+            return Promise.reject(errorMessage(e));
+        }
+    }
 }
+
