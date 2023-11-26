@@ -32,16 +32,16 @@ type TAnswerCompany = {
     score: number
 }
 
-type TAnswerPersonal = {
-    newcomer: true
-} | {
-    mood?: PersonalFeedbackMood,
-    text?: string
-}
+type TAnswerPersonal = { feedbackTo: TObjectId<IRespondent> } &
+    ({ newcomer: true } |
+    {
+        mood?: PersonalFeedbackMood,
+        text?: string
+    })
 
-type TAnswerTeamAssertBoolean = Record<TObjectId<IRespondent>, boolean>
+type TAnswerTeamAssertBoolean = { respondentId: TObjectId<IRespondent>, is: boolean }[]
 
-type TAnswerTeamAssertCheckbox = TObjectId<IRespondent>[]
+type TAnswerTeamAssertCheckbox = { respondentId: TObjectId<IRespondent>, is: true }[]
 
 type TAnswerWall = {
     mood?: SelfMood,
@@ -65,7 +65,7 @@ export interface ISurveyResultConfirmedAnswer extends ISurveyResultBasic {
     answer: TAnswer
 }
 
-export type ISurveyResult = ISurveyResultSkippedQuestion | ISurveyResultConfirmedAnswer 
+export type ISurveyResult = ISurveyResultSkippedQuestion | ISurveyResultConfirmedAnswer
 
 export interface ISurveyResultManager extends IEntityManager<ISurveyResult> {
     confirmAnswer(surveyId: TObjectId<ISurvey>, data: ISurveyResultConfirmedAnswer): Promise<true>;

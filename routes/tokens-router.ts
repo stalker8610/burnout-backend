@@ -1,5 +1,5 @@
 import { APIRouter } from "./generic-router.js";
-import { SingupTokenManager } from "../dal/mongo/token.access.js";
+import { SingupTokenManager } from "../dal/mongo/signup-token.access.js";
 import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
 import { Scopes } from "../models/user.model.js";

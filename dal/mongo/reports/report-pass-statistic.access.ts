@@ -4,6 +4,7 @@ import { MongoClient, Db } from "mongodb";
 import { IReportPassStaticticRecord, IReportPassStatisticResponse, IReportPassStaticticManager } from "../../../models/reports/report-pass-statistic.model.js";
 import { dbName } from "../core.access.js";
 import { errorMessage } from '../../../util/util.js';
+import { generateDateBoundaries } from '../../../util/util.js';
 
 
 export class ReportPassStatisticManager implements IReportPassStaticticManager {
@@ -17,7 +18,7 @@ export class ReportPassStatisticManager implements IReportPassStaticticManager {
     async getRecords(companyId: TObjectId<ICompany>, from?: Date, to?: Date): Promise<IReportPassStatisticResponse> {
         try {
 
-            const boundaries = this.generateDateBoundaries(5);
+            const boundaries = generateDateBoundaries(5);
 
             const generatedSurveysPipeline = [
                 {
@@ -250,28 +251,6 @@ export class ReportPassStatisticManager implements IReportPassStaticticManager {
         } catch (e) {
             return Promise.reject(errorMessage(e));
         }
-    }
-
-    private generateDateBoundaries(limit: number = 20) {
-
-        let currentDate = new Date();
-        const boundaries = [new Date(currentDate)]
-
-        // search for first monday
-        while (currentDate.getDay() !== 1) {
-            currentDate.setDate(currentDate.getDate() - 1);
-        }
-
-        boundaries.unshift(new Date(currentDate.setHours(0, 0, 0, 0)));
-
-        // then count weeks before
-        for (let i = 0; i < limit; i++) {
-            currentDate.setDate(currentDate.getDate() - 7);
-            boundaries.unshift(new Date(currentDate));
-        }
-
-        return boundaries;
-
     }
 
     private joinPipeline(collectionName: string, pipeline: Array<any>, asFieldName: string) {

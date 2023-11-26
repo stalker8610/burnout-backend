@@ -72,7 +72,6 @@ export class SurveyResultManager extends EntityManager<ISurveyResult> implements
 
     async skipQuestion(surveyId: TObjectId<ISurvey>, data: ISurveyResultSkippedQuestion): Promise<true> {
         try {
-            const survey = await this.surveyManager.findById(surveyId);
             const entity: ISurveyResultSkippedQuestion = {
                 surveyId,
                 questionId: data.questionId,

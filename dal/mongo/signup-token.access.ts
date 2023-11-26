@@ -1,4 +1,4 @@
-import { ISignupToken, ISignupTokenManager } from '../../models/token.model.js';
+import { ISignupToken, ISignupTokenManager } from '../../models/signup-token.model.js';
 import { MongoClient } from "mongodb";
 import { TObjectId, TWithId } from "../../models/common.model.js";
 import { EntityManager } from "./common.access.js";

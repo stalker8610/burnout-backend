@@ -3,7 +3,7 @@ import express from 'express';
 import passport from 'passport';
 import { Strategy as LocalStrategy, IVerifyOptions } from 'passport-local';
 
-import { SingupTokenManager } from '../dal/mongo/token.access.js';
+import { SingupTokenManager } from '../dal/mongo/signup-token.access.js';
 import { RespondentManager } from '../dal/mongo/respondent.access.js';
 
 import { UserManager } from '../dal/mongo/user.access.js';
