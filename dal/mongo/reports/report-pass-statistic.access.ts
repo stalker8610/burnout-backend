@@ -239,9 +239,11 @@ export class ReportPassStatisticManager implements IReportPassStaticticManager {
                 }
             ]
 
-            const result = await this.db.collection('Departments').aggregate(
-                reportPipeline
-            ).toArray() as IReportPassStaticticRecord[];
+            const result = await this.db
+                .collection('Departments')
+                .aggregate<IReportPassStaticticRecord>(
+                    reportPipeline
+                ).toArray();
 
             return {
                 periods: boundaries.slice(0, -1),

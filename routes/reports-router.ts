@@ -49,6 +49,8 @@ router.get('/personal-efficiency/:companyId/:respondentId', (req, res) => {
 })
 
 router.get('/personal-skills/:companyId/:respondentId', (req, res) => {
+    console.log('companyId', req.params.companyId);
+    console.log('respondentId', req.params.respondentId);
     reportPersonalSkillsManager.getRecords(req.params.companyId, req.params.respondentId)
         .then(result => res.json(result),
             err => res.status(500).send(err));

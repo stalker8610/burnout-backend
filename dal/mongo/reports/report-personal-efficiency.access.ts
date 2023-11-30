@@ -21,80 +21,80 @@ export class ReportPersonalEfficiencyManager implements IReportPersonalEfficienc
 
     async getRecords(companyId: TObjectId<ICompany>, respondentId: TObjectId<IRespondent>): Promise<IReportPersonalEfficiencyResponse> {
         try {
-            const result = await this.db.collection('Respondents').aggregate([
-                { $match: { companyId, _id: respondentId } },
-                {
-                    $lookup: {
-                        from: 'Questions',
-                        as: 'questions',
-                        pipeline: [
-                            { $match: { type: 'personal' } },
-                            {
-                                $project: {
-                                    '_id': 1
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    $project: {
-                        'questionId': {
-                            $getField: {
-                                field: '_id',
-                                input: { $first: "$questions" }
-                            }
-                        }
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'SurveyResults',
-                        let: {
-                            respondentId: "$_id",
-                            questionId: "$questionId"
-                        },
-                        as: 'rates',
-                        pipeline: [
-                            {
-                                $match: {
-                                    companyId,
-                                    $expr: {
-                                        $and: [
-                                            { $eq: ["$$questionId", "$questionId"] },
-                                            { $eq: ["$$respondentId", "$answer.feedbackTo"] },
-                                        ]
+            const result = await this.db
+                .collection('Respondents')
+                .aggregate<IReportPersonalEfficiencyRecord>([
+                    { $match: { companyId, _id: respondentId } },
+                    {
+                        $lookup: {
+                            from: 'Questions',
+                            as: 'questions',
+                            pipeline: [
+                                { $match: { type: 'personal' } },
+                                {
+                                    $project: {
+                                        '_id': 1
                                     }
                                 }
-                            },
-                            {
-                                $project: {
-                                    "_id": 0,
-                                    "mood": "$answer.mood",
-                                    "text": "$answer.text"
-
+                            ]
+                        }
+                    },
+                    {
+                        $project: {
+                            'questionId': {
+                                $getField: {
+                                    field: '_id',
+                                    input: { $first: "$questions" }
                                 }
                             }
-                        ]
-                    }
-                },
-                {
-                    $match: {
-                        $expr: { $gt: [{ $size: "$rates" }, 0] }
-                    }
-                },
-                {
-                    $project: {
-                        "_id": 0,
-                        "respondentId": "$_id",
-                        "rates": 1
-                    }
-                }
-            ]).toArray() as IReportPersonalEfficiencyRecord[];
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'SurveyResults',
+                            let: {
+                                respondentId: "$_id",
+                                questionId: "$questionId"
+                            },
+                            as: 'rates',
+                            pipeline: [
+                                {
+                                    $match: {
+                                        companyId,
+                                        $expr: {
+                                            $and: [
+                                                { $eq: ["$$questionId", "$questionId"] },
+                                                { $eq: ["$$respondentId", "$answer.feedbackTo"] },
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    $project: {
+                                        "_id": 0,
+                                        "mood": "$answer.mood",
+                                        "text": "$answer.text"
 
-            return {
-                records: result
-            }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $match: {
+                            $expr: { $gt: [{ $size: "$rates" }, 0] }
+                        }
+                    },
+                    {
+                        $project: {
+                            "_id": 0,
+                            "respondentId": "$_id",
+                            "rates": 1
+                        }
+                    }
+                ]).toArray();
+
+            return result[0];
 
         } catch (e) {
             return Promise.reject(errorMessage(e));

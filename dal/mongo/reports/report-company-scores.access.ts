@@ -18,126 +18,128 @@ export class ReportCompanyScoresManager implements IReportCompanyScoresManager {
         try {
 
             const boundaries = generateDateBoundaries(1);
-            let result = await this.db.collection('Questions').aggregate([
-                {
-                    $match: { type: "company" }
-                },
-                {
-                    $group: {
-                        _id: "$category"
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "Questions",
-                        localField: "_id",
-                        foreignField: "category",
-                        as: "questions",
-                        pipeline: [
-                            {
-                                $match: { type: "company" }
-                            },
-                            {
-                                $lookup: {
-                                    from: "SurveyResults",
-                                    let: {
-                                        inverted: "$inverted"
-                                    },
-                                    localField: "_id",
-                                    foreignField: "questionId",
-                                    as: "answers",
-                                    pipeline: [
-                                        {
-                                            $match: {
-                                                companyId,
-                                                date: { $gte: boundaries[0], $lt: boundaries[2] },
-                                                skipped: { $exists: false }
-                                            }
+            let result = await this.db
+                .collection('Questions')
+                .aggregate<IReportCompanyScoresRecord>([
+                    {
+                        $match: { type: "company" }
+                    },
+                    {
+                        $group: {
+                            _id: "$category"
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "Questions",
+                            localField: "_id",
+                            foreignField: "category",
+                            as: "questions",
+                            pipeline: [
+                                {
+                                    $match: { type: "company" }
+                                },
+                                {
+                                    $lookup: {
+                                        from: "SurveyResults",
+                                        let: {
+                                            inverted: "$inverted"
                                         },
-                                        {
-                                            $project: {
-                                                "_id": 0,
-                                                "departmentId": 1,
-                                                "pureScore": "$answer.score",
-                                                "calcScore": {
-                                                    $switch: {
-                                                        branches: [
-                                                            {
-                                                                case: "$$inverted", then: {
-                                                                    $switch: {
-                                                                        branches: [
-                                                                            { case: { $gt: ["$answer.score", 5] }, then: 0 },
-                                                                            { case: { $gt: ["$answer.score", 1] }, then: 0.5 },
-                                                                        ],
-                                                                        default: 1
+                                        localField: "_id",
+                                        foreignField: "questionId",
+                                        as: "answers",
+                                        pipeline: [
+                                            {
+                                                $match: {
+                                                    companyId,
+                                                    date: { $gte: boundaries[0], $lt: boundaries[2] },
+                                                    skipped: { $exists: false }
+                                                }
+                                            },
+                                            {
+                                                $project: {
+                                                    "_id": 0,
+                                                    "departmentId": 1,
+                                                    "pureScore": "$answer.score",
+                                                    "calcScore": {
+                                                        $switch: {
+                                                            branches: [
+                                                                {
+                                                                    case: "$$inverted", then: {
+                                                                        $switch: {
+                                                                            branches: [
+                                                                                { case: { $gt: ["$answer.score", 5] }, then: 0 },
+                                                                                { case: { $gt: ["$answer.score", 1] }, then: 0.5 },
+                                                                            ],
+                                                                            default: 1
+                                                                        }
                                                                     }
                                                                 }
-                                                            }
-                                                        ],
-                                                        default: {
-                                                            $switch: {
-                                                                branches: [
-                                                                    { case: { $gt: ["$answer.score", 8] }, then: 1 },
-                                                                    { case: { $gt: ["$answer.score", 4] }, then: 0.5 },
-                                                                ],
-                                                                default: 0
+                                                            ],
+                                                            default: {
+                                                                $switch: {
+                                                                    branches: [
+                                                                        { case: { $gt: ["$answer.score", 8] }, then: 1 },
+                                                                        { case: { $gt: ["$answer.score", 4] }, then: 0.5 },
+                                                                    ],
+                                                                    default: 0
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
-                                        }
-                                    ]
-                                }
-                            },
-                            {
-                                $match: {
-                                    $expr: {
-                                        $gt: [{ $size: { $ifNull: ["$answers", []] } }, 0]
+                                        ]
                                     }
-                                }
-                            },
-                            {
-                                $set: {
-                                    value: { $sum: "$answers.calcScore" },
-                                    count: { $size: "$answers" }
                                 },
-                            },
-                            /* { РАСКОММЕНТИРОВАТЬ!!!
-                                $match: {
-                                    count: { $gte: 5 }
-                                }
-                            } */
-                        ]
-                    }
-                },
-                {
-                    $match: {
-                        $expr: {
-                            $gt: [{ $size: { $ifNull: ["$questions", []] } }, 0]
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $gt: [{ $size: { $ifNull: ["$answers", []] } }, 0]
+                                        }
+                                    }
+                                },
+                                {
+                                    $set: {
+                                        value: { $sum: "$answers.calcScore" },
+                                        count: { $size: "$answers" }
+                                    },
+                                },
+                                /* { РАСКОММЕНТИРОВАТЬ!!!
+                                    $match: {
+                                        count: { $gte: 5 }
+                                    }
+                                } */
+                            ]
+                        }
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $gt: [{ $size: { $ifNull: ["$questions", []] } }, 0]
+                            }
+                        }
+                    },
+                    {
+                        $set: {
+                            value: { $sum: "$questions.value" },
+                            count: { $sum: "$questions.count" }
+                        },
+                    },
+                    {
+                        $project: {
+                            "_id": 0,
+                            "category": "$_id",
+                            "questions.title": 1,
+                            "questions.inverted": 1,
+                            "questions.answers": 1,
+                            "questions.value": 1,
+                            "questions.count": 1,
+                            "value": 1,
+                            "count": 1
                         }
                     }
-                },
-                {
-                    $set: {
-                        value: { $sum: "$questions.value" },
-                        count: { $sum: "$questions.count" }
-                    },
-                },
-                {
-                    $project: {
-                        "_id": 0,
-                        "category": "$_id",
-                        "questions.title": 1,
-                        "questions.inverted": 1,
-                        "questions.answers": 1,
-                        "questions.value": 1,
-                        "questions.count": 1,
-                        "value": 1,
-                        "count": 1
-                    }
-                }
-            ]).toArray() as IReportCompanyScoresRecord[];
+                ]).toArray();
 
             return {
                 period: [boundaries[0], boundaries[2]],

@@ -11,9 +11,7 @@ export interface IReportPersonalEfficiencyRecord {
     }>
 }
 
-export interface IReportPersonalEfficiencyResponse {
-    records: IReportPersonalEfficiencyRecord[]
-}
+export interface IReportPersonalEfficiencyResponse extends IReportPersonalEfficiencyRecord {}
 
 export interface IReportPersonalEfficiencyManager {
     getRecords(companyId: TObjectId<ICompany>, respondentId: TObjectId<IRespondent>): Promise<IReportPersonalEfficiencyResponse>;

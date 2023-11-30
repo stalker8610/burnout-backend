@@ -45,7 +45,6 @@ router.get('/respondent/:respondentId', (req, res) => {
 });
 
 router.post('/generate/:companyId/:respondentId', (req, res) => {
-    console.log(req.params.respondentId, req.params.companyId);
     surveyManager.generateSurvey(req.params.respondentId, req.params.companyId)
         .then(
             (survey) => res.status(200).json(survey),
@@ -53,7 +52,6 @@ router.post('/generate/:companyId/:respondentId', (req, res) => {
 });
 
 router.post('/:surveyId/complete', (req, res) => {
-    console.log('survey completed');
     surveyManager.completeSurvey(req.params.surveyId)
         .then(
             survey => res.status(200).json(survey),
@@ -61,7 +59,6 @@ router.post('/:surveyId/complete', (req, res) => {
 });
 
 router.post('/:surveyId/confirmAnswer', (req, res) => {
-    console.log('answer confirmed');
     surveyResultManager.confirmAnswer(req.params.surveyId, req.body)
         .then(
             () => res.sendStatus(200),
@@ -69,7 +66,6 @@ router.post('/:surveyId/confirmAnswer', (req, res) => {
 });
 
 router.post('/:surveyId/skipQuestion', (req, res) => {
-    console.log('question skipped');
     surveyResultManager.skipQuestion(req.params.surveyId, req.body)
         .then(
             () => res.sendStatus(200),

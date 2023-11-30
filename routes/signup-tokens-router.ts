@@ -37,7 +37,7 @@ export const router = new APIRouter('', entityManager, scopeAccessRules).getRout
 router.get('/validate/:_id', (req, res) => {
     entityManager.validateToken(req.params._id)
         .then(
-            () => res.sendStatus(200),
+            token => res.json(token),
             err => res.status(400).send(err));
 })
 

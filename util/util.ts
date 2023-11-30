@@ -1,3 +1,6 @@
+import { TObjectId } from "../models/common.model.js";
+import { IRespondent } from "../models/respondent.model.js";
+
 export const errorMessage = (e) => {
     return typeof e === 'string' ? e : e.message;
 }
@@ -21,5 +24,12 @@ export const generateDateBoundaries = (limit: number) => {
     }
 
     return boundaries;
+
+}
+
+export const generateSurveys = (respondents: TObjectId<IRespondent>[]) => {
+    respondents.forEach(respondent => {
+
+    })
 
 }

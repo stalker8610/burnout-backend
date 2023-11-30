@@ -53,20 +53,20 @@ const createDepartmentsAlx = async (companyAlx: TWithId<ICompany>) => {
     const depAlxSales = await departmentManager.create({
         title: 'Отдел продаж',
         companyId: companyAlx._id,
-        parentDepartmentId: depAlxAdm._id
+        //parentDepartmentId: depAlxAdm._id
     });
 
 
     const depAlxTO = await departmentManager.create({
         title: 'Технический отдел',
         companyId: companyAlx._id,
-        parentDepartmentId: depAlxAdm._id
+        //parentDepartmentId: depAlxAdm._id
     });
 
     const depAlxHR = await departmentManager.create({
         title: 'Отдел кадров',
         companyId: companyAlx._id,
-        parentDepartmentId: depAlxAdm._id
+        //parentDepartmentId: depAlxAdm._id
     })
 
     console.log(`\ncreateDepartmentsAlx:`);

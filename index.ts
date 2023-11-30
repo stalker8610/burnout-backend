@@ -45,7 +45,7 @@ import { router as mainRouter } from './routes/main-router.js';
 import { router as respondentsRouter } from './routes/respondents-router.js';
 import { router as departmentsRouter } from './routes/departments-router.js';
 import { router as companiesRouter } from './routes/companies-router.js';
-import { router as tokensRouter } from './routes/tokens-router.js';
+import { router as tokensRouter } from './routes/signup-tokens-router.js';
 import { router as surveysRouter } from './routes/surveys-router.js';
 import { router as reportsRouter } from './routes/reports-router.js';
 
@@ -63,7 +63,8 @@ app.use('/api/respondents', respondentsRouter);
 app.use('/api/departments', departmentsRouter);
 app.use('/api/companies', companiesRouter);
 app.use('/api/reports', reportsRouter);
-app.use('/', mainRouter);
+app.use('**', mainRouter);
+
 
 
 const webServer = app.listen(serverConfig.port, () => {

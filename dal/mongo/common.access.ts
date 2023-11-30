@@ -22,19 +22,13 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
 
     async create(data: T): Promise<TWithId<T>> {
         try {
-
             const _id = new ObjectId().toHexString();
             const dataWithId = {
                 ...data,
                 _id
             }
-
-            //const newObjId = (await this.collection.insertOne(<OptionalUnlessRequiredId<OptionalId<T>>>dataWithId)).insertedId.toHexString();
-            //return this.findById(newObjId);
-
             await this.collection.insertOne(<OptionalUnlessRequiredId<OptionalId<T>>>dataWithId);
             return this.findById(_id);
-
         } catch (e) {
             return Promise.reject(errorMessage(e));
         }
@@ -57,25 +51,24 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
         }
     }
 
-    //async update(_id: TObjectId, data: TWithId<Partial<T>>): Promise<TWithId<T>> {
-    //async update(_id: TObjectId, data: TWithId<T>): Promise<TWithId<T>> {
     async update(_id: TObjectId<T>, data: Partial<OptionalId<T>>): Promise<TWithId<T>> {
         const dataToUpdate = Object.assign({}, data);
         delete dataToUpdate._id;
         try {
             const updateResult = await this.collection.updateOne(this.idFilter(_id), { $set: { ...dataToUpdate } });
+            if (!updateResult.matchedCount) {
+                throw `Object with _id ${_id} not found`;
+            }
             if (updateResult.modifiedCount === 1) {
                 const index = this.cache.findIndex(el => el._id === _id);
                 if (index !== -1) {
                     this.cache.splice(index, 1);
                 }
-                return this.findById(_id);
             }
-            throw `Object with _id ${_id} not found`;
+            return this.findById(_id);
         } catch (e) {
             return Promise.reject(errorMessage(e));
         }
-
     }
 
     async delete(_id: TObjectId<T>): Promise<true> {
@@ -104,14 +97,9 @@ export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , R
 
     protected changeIdType(entity: WithId<OptionalId<T>>): TWithId<T> {
         return entity as TWithId<T>;
-        /* return entity && {
-            ...entity,
-            _id: entity._id.toHexString()
-        } as TWithId<T> */
     }
 
     private idFilter(_id) {
-        //return { _id: new ObjectId(_id) } as Filter<OptionalId<T>>;
         return { _id } as Filter<OptionalId<T>>;
     }
 

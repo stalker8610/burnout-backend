@@ -4,7 +4,7 @@ import { ISurvey, ISurveyManager, IQuestion, TQuestionType } from "../../models/
 import { IEntityManager, TObjectId, TWithId } from "../../models/common.model.js";
 import { CompanyRelatedEntityManager, EntityManager } from "./common.access.js";
 import { errorMessage } from '../../util/util.js';
-import { IRespondent } from "../../models/respondent.model.js";
+import { IRespondent, SignUpStatus } from "../../models/respondent.model.js";
 import { ICompany } from "../../models/company.model.js";
 import { SurveyProgressManager } from "./survey-progress.access.js";
 
@@ -136,7 +136,7 @@ export class SurveyManager extends EntityManager<ISurvey> implements ISurveyMana
             let teammate: TWithId<IRespondent>;
             do {
                 teammate = allTeammates[Math.floor(Math.random() * allTeammates.length)];
-            } while (teammate._id === excludeId);
+            } while (teammate._id === excludeId || teammate.signUpStatus === SignUpStatus.Disabled);
 
             return teammate;
         } catch (e) {

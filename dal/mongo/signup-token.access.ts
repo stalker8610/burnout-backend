@@ -26,11 +26,11 @@ export class SingupTokenManager extends EntityManager<ISignupToken/* , TUserRequ
             const params = {
                 userName: respondent.firstName || respondent.lastName,
                 inviterName: `${inviter.lastName || ''} ${inviter.firstName || ''}`.trim(),
-                signUpLink: `${serverConfig.protocol}://${serverConfig.host}:${serverConfig.port}/auth/signup/${result._id}`,
-                toEmail: respondent.email
+                //signUpLink: `${serverConfig.protocol}://${serverConfig.host}:${serverConfig.port}/auth/signup/${result._id}`,
+                signUpLink: `${serverConfig.protocol}://${serverConfig.host}:4200/signup/${result._id}`,
             }
 
-            await sendInviteEmail(params);
+            await sendInviteEmail(respondent.email, params);
             await this.respondentManager.update(data.respondentId, { signUpStatus: SignUpStatus.Invited });
             return result;
         } catch (e) {
