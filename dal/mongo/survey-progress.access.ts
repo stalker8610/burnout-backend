@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { type MongoClient } from "mongodb";
 import { EntityManager } from "./common.access.js";
 import { ISurveyProgress, ISurveyProgressManager } from "../../models/survey-progress.model.js";
 import { TWithId } from "../../models/common.model.js";

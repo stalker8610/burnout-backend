@@ -1,24 +1,22 @@
-import { MongoClient, ObjectId } from "mongodb";
+import { type MongoClient } from "mongodb";
 import crypto from 'crypto';
-import { IUser, /* TUserRequired,  */IUserManager } from "../../models/user.model.js";
-/* import { projectIdOptions } from "./core.access.js"; */
+import { IUser, IUserManager } from "../../models/user.model.js";
 import { TObjectId, TWithId } from "../../models/common.model.js";
 import { EntityManager } from "./common.access.js";
 import { IRespondent } from "../../models/respondent.model.js";
 import { errorMessage } from '../../util/util.js';
 
-export class UserManager extends EntityManager<IUser/* , TUserRequired */> implements IUserManager {
+export class UserManager extends EntityManager<IUser> implements IUserManager {
 
     constructor(dbClient: MongoClient) {
         super(dbClient, 'Users');
     }
 
     findByEmail(email: string): Promise<TWithId<IUser>> {
-        return this.collection.findOne({ email }/* , projectIdOptions */) as unknown as Promise<TWithId<IUser>>;
+        return this.collection.findOne({ email }) as unknown as Promise<TWithId<IUser>>;
     }
 
-    async createUser(data: IUser/* TUserRequired */ & { password: string }): Promise<TWithId<IUser>> {
-        //async createUser(data: TUserRequired & { password: string }): Promise<TObjectId> {
+    async createUser(data: IUser & { password: string }): Promise<TWithId<IUser>> {
         try {
             if (await this.collection.findOne({ email: data.email })) {
                 throw `User with email ${data.email} already exists`;

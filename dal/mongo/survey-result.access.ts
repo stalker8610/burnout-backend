@@ -1,26 +1,25 @@
-import { MongoClient } from "mongodb";
+import { type MongoClient } from "mongodb";
 import { EntityManager } from "./common.access.js";
 import { ISurveyResult, ISurveyResultManager, ISurveyResultConfirmedAnswer, ISurveyResultSkippedQuestion } from "../../models/survey-result.model.js";
 import { RespondentManager } from "./respondent.access.js";
 import { TObjectId, TWithId } from "../../models/common.model.js";
 import { SurveyManager } from "./survey.access.js";
 import { errorMessage } from "../../util/util.js";
-import { ISurvey } from "../../models/survey.model.js";
+import { ISurvey, ISurveyManager } from "../../models/survey.model.js";
 
 import { SurveyProgressManager } from "./survey-progress.access.js";
+import { IRespondentManager } from "../../models/respondent.model.js";
+import { ISurveyProgressManager } from "../../models/survey-progress.model.js";
 
 
 export class SurveyResultManager extends EntityManager<ISurveyResult> implements ISurveyResultManager {
 
-    private respondentManager: RespondentManager;
-    private surveyManager: SurveyManager;
-    private surveyProgressManager: SurveyProgressManager;
-
-    constructor(dbClient: MongoClient) {
+    constructor(dbClient: MongoClient, 
+        private respondentManager: IRespondentManager,
+        private surveyManager: ISurveyManager,
+        private surveyProgressManager: ISurveyProgressManager
+        ) {
         super(dbClient, 'SurveyResults');
-        this.respondentManager = new RespondentManager(dbClient);
-        this.surveyManager = new SurveyManager(dbClient);
-        this.surveyProgressManager = new SurveyProgressManager(this.dbClient);
     }
 
     override async create(data: ISurveyResult): Promise<TWithId<ISurveyResult>> {

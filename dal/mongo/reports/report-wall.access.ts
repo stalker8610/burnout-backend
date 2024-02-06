@@ -1,6 +1,6 @@
 import { ICompany } from './../../../models/company.model.js';
 import { TObjectId } from './../../../models/common.model.js';
-import { MongoClient, Db } from "mongodb";
+import { type MongoClient, type Db } from "mongodb";
 import { IReportWallManager, IReportWallResponse, IReportWallRecord } from "../../../models/reports/report-wall.model.js";
 import { dbName } from "../core.access.js";
 import { errorMessage } from '../../../util/util.js';
@@ -9,8 +9,6 @@ import { errorMessage } from '../../../util/util.js';
 export class ReportWallManager implements IReportWallManager {
 
     protected readonly db: Db;
-    //private cache = <Array<TWithId<T>>>[];
-
     constructor(protected readonly dbClient: MongoClient) {
         this.db = this.dbClient.db(dbName);
     }

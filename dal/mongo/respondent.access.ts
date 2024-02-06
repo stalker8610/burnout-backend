@@ -1,18 +1,15 @@
-import { MongoClient } from "mongodb";
+import { type MongoClient } from "mongodb";
 import { IRespondent, IRespondentManager, SignUpStatus } from "../../models/respondent.model.js";
 import { EntityManager } from "./common.access.js";
 import { TWithId, TObjectId } from "../../models/common.model.js";
 import { errorMessage } from '../../util/util.js';
 import { IUserManager } from "../../models/user.model.js";
-import { UserManager } from "./user.access.js";
+
 
 export class RespondentManager extends EntityManager<IRespondent> implements IRespondentManager {
 
-    userEntityManager: IUserManager;
-
-    constructor(dbClient: MongoClient) {
+    constructor(dbClient: MongoClient, private userManager: IUserManager) {
         super(dbClient, 'Respondents');
-        this.userEntityManager = new UserManager(dbClient);
     }
 
     override async create(data: IRespondent): Promise<TWithId<IRespondent>> {
@@ -43,8 +40,8 @@ export class RespondentManager extends EntityManager<IRespondent> implements IRe
 
     async deactivate(respondentId: TObjectId<IRespondent>): Promise<TWithId<IRespondent>> {
         try {
-            const user = await this.userEntityManager.findByRespondentId(respondentId);
-            await this.userEntityManager.update(user._id, { disabled: true });
+            const user = await this.userManager.findByRespondentId(respondentId);
+            await this.userManager.update(user._id, { disabled: true });
             await this.update(respondentId, { signUpStatus: SignUpStatus.Disabled });
             return this.findById(respondentId);
         } catch (e) {

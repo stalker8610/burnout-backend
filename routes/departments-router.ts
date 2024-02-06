@@ -1,9 +1,9 @@
+
 import { APIRouter } from "./generic-router.js";
-import { DepartmentManager } from "../dal/mongo/department.access.js";
-import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
 import { isSameCompanyRequest } from "./guards.js";
 import { Scopes } from "../models/user.model.js";
+import { IDomainManagers } from '../models/common.model.js';
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -15,7 +15,7 @@ const scopeAccessRules: TScopeAccessRules = {
     'POST': {
         'null': false,
         [Scopes.User]: false,
-        [Scopes.HR]: isSameCompanyRequest, 
+        [Scopes.HR]: isSameCompanyRequest,
         [Scopes.Admin]: true,
     },
     'PUT': {
@@ -32,8 +32,10 @@ const scopeAccessRules: TScopeAccessRules = {
     }
 }
 
-const entityManager = new DepartmentManager(dbClient);
-export const router = new APIRouter('/:companyId', entityManager, scopeAccessRules).getRouter();
+export const getRouter = ({ departmentManager }: Pick<IDomainManagers, 'departmentManager'>) => {
+    const router = new APIRouter('/:companyId', departmentManager, scopeAccessRules).getRouter();
+    return router;
+}
 
 
 

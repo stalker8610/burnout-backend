@@ -1,6 +1,6 @@
 import { ICompany } from '../../../models/company.model.js';
 import { TObjectId } from '../../../models/common.model.js';
-import { MongoClient, Db } from "mongodb";
+import { type MongoClient, type Db } from "mongodb";
 import { dbName } from "../core.access.js";
 import { errorMessage } from '../../../util/util.js';
 import { IReportCompanyScoresResponse, IReportCompanyScoresRecord, IReportCompanyScoresManager } from '../../../models/reports/report-company-scores.model.js';

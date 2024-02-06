@@ -1,5 +1,5 @@
 import { TWithId } from '../models/common.model.js';
-import { dbClient } from '../dal/mongo/core.access.js';
+import { getDbClient } from '../dal/mongo/core.access.js';
 import { CompanyManager } from '../dal/mongo/company.access.js';
 import { UserManager } from '../dal/mongo/user.access.js';
 import { RespondentManager } from '../dal/mongo/respondent.access.js';
@@ -9,12 +9,19 @@ import { ICompany } from '../models/company.model.js';
 import { IDepartment } from '../models/department.model.js';
 import { IRespondent, SignUpStatus } from '../models/respondent.model.js';
 import { SurveyManager } from '../dal/mongo/survey.access.js';
+import { QuestionManager } from '../dal/mongo/question.access.js';
+import { SurveyProgressManager } from '../dal/mongo/survey-progress.access.js';
+
+const { dbClient } = getDbClient()
 
 const companyManager = new CompanyManager(dbClient);
 const userManager = new UserManager(dbClient);
-const respondentManager = new RespondentManager(dbClient);
+const respondentManager = new RespondentManager(dbClient, userManager);
 const departmentManager = new DepartmentManager(dbClient);
-const surveyManager = new SurveyManager(dbClient)
+const questionManager = new QuestionManager(dbClient);
+const surveyProgressManager = new SurveyProgressManager(dbClient);
+const surveyManager = new SurveyManager(dbClient, questionManager, surveyProgressManager, respondentManager);
+
 
 const createAdmin = async () => {
     const userAdmin = await userManager.createUser({
@@ -32,15 +39,15 @@ const createCompanies = async () => {
     const companyAlx = await companyManager.create({
         name: 'ALEXROVICH'
     });
-    const companyRevator = await companyManager.create({
+    /* const companyRevator = await companyManager.create({
         name: 'REVATOR'
-    });
+    }); */
 
     console.log(`\ncreateCompanies:`);
     console.log(companyAlx);
-    console.log(companyRevator);
-
-    return { companyAlx, companyRevator }
+    /* console.log(companyRevator);
+ */
+    return { companyAlx, /* companyRevator */ }
 }
 
 const createDepartmentsAlx = async (companyAlx: TWithId<ICompany>) => {
@@ -85,7 +92,7 @@ const createRespondentsAlx = async (companyAlx: TWithId<ICompany>,
 
     const respAlxHR = await respondentManager.create({
         firstName: 'Диана',
-        lastName: 'HR',
+        lastName: 'Михальчук',
         email: 'hr@alexrovich.ru',
         departmentId: depAlxHR._id,
         scope: Scopes.HR,
@@ -93,9 +100,9 @@ const createRespondentsAlx = async (companyAlx: TWithId<ICompany>,
     })
 
     const respAlxUser1 = await respondentManager.create({
-        firstName: 'Олег',
-        lastName: 'Долгов',
-        email: 'oid@alexrovich.ru',
+        firstName: 'Егор',
+        lastName: 'Долгих',
+        email: 'ooo@alexrovich.ru',
         departmentId: depAlxTO._id,
         scope: Scopes.User,
         companyId: companyAlx._id
@@ -103,8 +110,8 @@ const createRespondentsAlx = async (companyAlx: TWithId<ICompany>,
 
     const respAlxUser2 = await respondentManager.create({
         firstName: 'Артем',
-        lastName: 'Ковтун',
-        email: 'kan@alexrovich.ru',
+        lastName: 'Ковтунов',
+        email: 'kkk@alexrovich.ru',
         departmentId: depAlxTO._id,
         scope: Scopes.User,
         companyId: companyAlx._id
@@ -112,8 +119,8 @@ const createRespondentsAlx = async (companyAlx: TWithId<ICompany>,
 
     const respAlxUser3 = await respondentManager.create({
         firstName: 'Алексей',
-        lastName: 'Щербинский',
-        email: 'man@alexrovich.ru',
+        lastName: 'Щербаков',
+        email: 'mmm@alexrovich.ru',
         departmentId: depAlxSales._id,
         scope: Scopes.User,
         companyId: companyAlx._id
@@ -141,7 +148,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxHR._id
     })
-    respondentManager.update(respAlxHR._id, {signUpStatus: SignUpStatus.SingedUp});
+    respondentManager.update(respAlxHR._id, { signUpStatus: SignUpStatus.SingedUp });
 
     const alxUser1 = await userManager.createUser({
         email: respAlxUser1.email,
@@ -150,7 +157,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxUser1._id
     })
-    respondentManager.update(respAlxUser1._id, {signUpStatus: SignUpStatus.SingedUp});
+    respondentManager.update(respAlxUser1._id, { signUpStatus: SignUpStatus.SingedUp });
 
     const alxUser2 = await userManager.createUser({
         email: respAlxUser2.email,
@@ -159,7 +166,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxUser2._id
     })
-    respondentManager.update(respAlxUser2._id, {signUpStatus: SignUpStatus.SingedUp});
+    respondentManager.update(respAlxUser2._id, { signUpStatus: SignUpStatus.SingedUp });
 
     const alxUser3 = await userManager.createUser({
         email: respAlxUser3.email,
@@ -168,7 +175,7 @@ const createUsersAlx = async (companyAlx: TWithId<ICompany>,
         companyId: companyAlx._id,
         respondentId: respAlxUser3._id
     })
-    respondentManager.update(respAlxUser3._id, {signUpStatus: SignUpStatus.SingedUp});
+    respondentManager.update(respAlxUser3._id, { signUpStatus: SignUpStatus.SingedUp });
 
     console.log(`\ncreateUsersAlx:`);
     console.log(alxUserHR);
@@ -194,7 +201,7 @@ const dropCollections = async (collectionNames: Array<string>) => {
 
 (async () => {
 
-    await dropCollections(['Users', 'Respondents', 'Departments', 'Companies']);
+    await dropCollections(['Companies', 'Users', 'Respondents', 'Departments', 'Companies', 'Surveys', 'SurveyResults', 'IssuedSignupTokens', 'SurveyProgress', 'sessions']);
 
 
     let userAdmin = await dbClient.db('burnout').collection('Users').findOne({ scope: Scopes.Admin }) as any as TWithId<IUser>;
@@ -202,7 +209,7 @@ const dropCollections = async (collectionNames: Array<string>) => {
         userAdmin = await createAdmin();
     }
 
-    const { companyAlx, companyRevator } = await createCompanies();
+    const { companyAlx, /* companyRevator */ } = await createCompanies();
 
     const { depAlxAdm, depAlxSales, depAlxTO, depAlxHR } = await createDepartmentsAlx(companyAlx);
     const { respAlxHR, respAlxUser1, respAlxUser2, respAlxUser3 } = await createRespondentsAlx(companyAlx, depAlxSales, depAlxTO, depAlxHR);

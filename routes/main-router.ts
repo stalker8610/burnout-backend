@@ -1,7 +1,11 @@
 import express from 'express';
-import * as path from 'path';
+import path from 'path';
 
-export const router = express.Router();
-router.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'ui/index.html'));
-})
+export const getRouter = () => {
+    const router = express.Router();
+    router.get('/', (req, res) => {
+        res.sendFile(path.join(process.cwd(), 'ui/index.html'));
+    })
+
+    return router
+}

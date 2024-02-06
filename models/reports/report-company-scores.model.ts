@@ -1,7 +1,7 @@
 import { TObjectId } from '../common.model.js';
 import { ICompany } from '../company.model.js';
 import { IDepartment } from '../department.model.js';
-import { IQuestion } from '../survey.model.js';
+import { IQuestion } from '../question.model.js';
 
 export interface IReportCompanyScoresRecord {
     category: string,

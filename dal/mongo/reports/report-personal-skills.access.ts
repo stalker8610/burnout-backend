@@ -1,6 +1,6 @@
 import { ICompany } from '../../../models/company.model.js';
 import { TObjectId } from '../../../models/common.model.js';
-import { MongoClient, Db } from "mongodb";
+import { type MongoClient, type Db } from "mongodb";
 import {
     IReportPersonalSkillsRecord,
     IReportPersonalSkillsResponse,
@@ -92,7 +92,7 @@ export class ReportPersonalSkillsManager implements IReportPersonalSkillsManager
                             ]
                         }
                     },
-                   /*  {
+                    /* {
                         $match: {
                             $expr: { $gt: [{ $size: "$asserts" }, 0] }
                         }
@@ -100,7 +100,8 @@ export class ReportPersonalSkillsManager implements IReportPersonalSkillsManager
                     {
                         $set: {
                             score: { $sum: '$asserts.score' },
-                            positive: { $sum: '$asserts.positive' }
+                            positive: { $sum: '$asserts.positive' },
+                            count: { $size: '$asserts' }
                         }
                     },
                     {
@@ -111,12 +112,14 @@ export class ReportPersonalSkillsManager implements IReportPersonalSkillsManager
                             },
                             score: { $sum: '$score' },
                             positive: { $sum: '$positive' },
+                            count: { $sum: '$count' },
                             skills: {
                                 $push: {
                                     questionId: "$questionId",
                                     asserts: "$asserts",
                                     score: "$score",
-                                    positive: "$positive"
+                                    positive: "$positive",
+                                    count: "$count"
                                 }
                             }
                         }
@@ -129,7 +132,8 @@ export class ReportPersonalSkillsManager implements IReportPersonalSkillsManager
                                     category: '$_id.category',
                                     questions: '$skills',
                                     score: '$score',
-                                    positive: '$positive'
+                                    positive: '$positive',
+                                    count: "$count"
                                 }
                             }
                         }

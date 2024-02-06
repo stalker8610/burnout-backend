@@ -1,11 +1,9 @@
 import { APIRouter } from "./generic-router.js";
-import { CompanyManager } from "../dal/mongo/company.access.js";
-import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
 import { isSameCompanyRequest } from "./guards.js";
 import { Scopes } from "../models/user.model.js";
 import { isSameCompanyRequestGuard } from "./guards.js";
-import { TMethodGuards } from "./generic-router.js";
+import { IDomainManagers } from "../models/common.model.js";
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -34,19 +32,19 @@ const scopeAccessRules: TScopeAccessRules = {
     }
 }
 
-const entityManager = new CompanyManager(dbClient);
+export const getRouter = ({ companyManager }: Pick<IDomainManagers, 'companyManager'>) => {
+    
+    const router = new APIRouter('', companyManager, scopeAccessRules).getRouter();
+    
+    router.get('/:companyId/structure', isSameCompanyRequestGuard, (req, res) => {
+        companyManager.getCompanyStructure(req.params.companyId)
+            .then(
+                (data) => res.json(data),
+                err => res.status(400).send(err));
+    });
 
-const guards: TMethodGuards = { }
+    return router;
 
-export const router = new APIRouter('', entityManager, scopeAccessRules, guards).getRouter();
-
-router.get('/:companyId/structure', isSameCompanyRequestGuard, (req, res) => {
-    entityManager.getCompanyStructure(req.params.companyId)
-        .then(
-            (data) => res.json(data),
-            err => res.status(400).send(err));
-});
-
-
+}
 
 

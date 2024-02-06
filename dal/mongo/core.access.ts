@@ -2,10 +2,14 @@ import { MongoClient } from 'mongodb';
 import dbConfig from './db.config.json' assert { type: "json"};
 
 const uri = `mongodb://${dbConfig.userName}:${dbConfig.password}@${dbConfig.server}:${dbConfig.port}/burnout?authSource=${dbConfig.authSource}`;
-export const dbClient = new MongoClient(uri);
-export const dbClientPromise = dbClient.connect();
+export const getDbClient = () => {
+    console.log(uri);
+    const dbClient = new MongoClient(uri);
+    const dbClientPromise = dbClient.connect();
+    return { dbClient, dbClientPromise }
+}
 
-export const dbCloseConnection = () => {
+export const closeDbClient = (dbClient: MongoClient) => {
     return dbClient.close();
 }
 

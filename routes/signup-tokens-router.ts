@@ -1,8 +1,7 @@
 import { APIRouter } from "./generic-router.js";
-import { SingupTokenManager } from "../dal/mongo/signup-token.access.js";
-import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
 import { Scopes } from "../models/user.model.js";
+import { IDomainManagers } from "../models/common.model.js";
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -31,21 +30,25 @@ const scopeAccessRules: TScopeAccessRules = {
     }
 }
 
-const entityManager = new SingupTokenManager(dbClient);
-export const router = new APIRouter('', entityManager, scopeAccessRules).getRouter();
+export const getRouter = ({ tokenManager }: Pick<IDomainManagers, 'tokenManager'>) => {
 
-router.get('/validate/:_id', (req, res) => {
-    entityManager.validateToken(req.params._id)
-        .then(
-            token => res.json(token),
-            err => res.status(400).send(err));
-})
+    const router = new APIRouter('', tokenManager, scopeAccessRules).getRouter();
 
-router.post('/issue', (req, res) => {
-    const { tokenData, inviterId } = req.body;
-    entityManager.issueToken(tokenData, inviterId)
-        .then(
-            token => res.json(token),
-            err => res.status(400).send(err));
-})
+    router.get('/validate/:_id', (req, res) => {
+        tokenManager.validateToken(req.params._id)
+            .then(
+                token => res.json(token),
+                err => res.status(400).send(err));
+    })
 
+    router.post('/issue', (req, res) => {
+        const { tokenData, inviterId } = req.body;
+        tokenManager.issueToken(tokenData, inviterId)
+            .then(
+                token => res.json(token),
+                err => res.status(400).send(err));
+    })
+
+    return router;
+
+}

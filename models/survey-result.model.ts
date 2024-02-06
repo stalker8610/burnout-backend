@@ -1,8 +1,7 @@
-import { IEntityManager, TObjectId, TWithId } from "./common.model.js"
-import { IDepartment } from "./department.model.js";
+import { IEntityManager, TObjectId } from "./common.model.js"
 import { IRespondent } from "./respondent.model.js";
-import { IQuestion, ISurvey } from "./survey.model.js"
-import { ICompany } from "./company.model.js";
+import { ISurvey } from "./survey.model.js"
+import { IQuestion } from "./question.model.js";
 
 export enum SelfMood {
     Sad,

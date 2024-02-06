@@ -1,5 +1,5 @@
 import { ISignupToken, ISignupTokenManager } from '../../models/signup-token.model.js';
-import { MongoClient } from "mongodb";
+import { type MongoClient } from "mongodb";
 import { TObjectId, TWithId } from "../../models/common.model.js";
 import { EntityManager } from "./common.access.js";
 import { errorMessage } from '../../util/util.js';
@@ -9,12 +9,10 @@ import serverConfig from '../../server.config.json' assert { type: "json"};
 
 import { sendInviteEmail } from '../../util/email-sender.js';
 
-export class SingupTokenManager extends EntityManager<ISignupToken/* , TUserRequired */> implements ISignupTokenManager {
+export class SingupTokenManager extends EntityManager<ISignupToken> implements ISignupTokenManager {
 
-    private respondentManager: IRespondentManager;
-    constructor(dbClient: MongoClient) {
+    constructor(dbClient: MongoClient, private respondentManager: IRespondentManager) {
         super(dbClient, 'IssuedSignupTokens');
-        this.respondentManager = new RespondentManager(dbClient);
     }
 
     async issueToken(data: ISignupToken, inviterId: TObjectId<IRespondent>): Promise<TWithId<ISignupToken>> {

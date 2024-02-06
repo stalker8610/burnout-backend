@@ -1,5 +1,5 @@
 import { errorMessage } from './../../util/util.js';
-import { MongoClient } from "mongodb";
+import { type MongoClient } from "mongodb";
 import { ICompany, ICompanyManager, ICompanyStructure } from "../../models/company.model.js";
 import { EntityManager } from "./common.access.js";
 

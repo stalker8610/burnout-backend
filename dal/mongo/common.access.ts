@@ -1,11 +1,11 @@
-import { ObjectId, MongoClient, Collection, Db, Filter, OptionalId, OptionalUnlessRequiredId, WithId } from "mongodb";
+import { ObjectId, type MongoClient, type Collection, type Db, Filter, OptionalId, OptionalUnlessRequiredId, WithId } from "mongodb";
 import { TObjectId } from "../../models/common.model.js";
 import { IEntityManager, type TWithId, IWithCompanyId } from "../../models/common.model.js";
 import { dbName } from "./core.access.js";
 import { errorMessage } from '../../util/util.js';
 import { ICompany } from "../../models/company.model.js";
 
-export class EntityManager<T/* , RequiredT */> implements IEntityManager<T/* , RequiredT */>{
+export class EntityManager<T> implements IEntityManager<T>{
 
     protected readonly db: Db;
     protected readonly collection: Collection<OptionalId<T>>;

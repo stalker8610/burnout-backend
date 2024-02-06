@@ -1,33 +1,31 @@
-import { RespondentManager } from './respondent.access.js';
-import { MongoClient } from "mongodb";
-import { ISurvey, ISurveyManager, IQuestion, TQuestionType } from "../../models/survey.model.js";
-import { IEntityManager, TObjectId, TWithId } from "../../models/common.model.js";
+import { type MongoClient } from "mongodb";
+import { ISurvey, ISurveyManager } from "../../models/survey.model.js";
+import { IQuestion, IQuestionManager, TQuestionType } from '../../models/question.model.js';
+import { TObjectId, TWithId } from "../../models/common.model.js";
 import { CompanyRelatedEntityManager, EntityManager } from "./common.access.js";
 import { errorMessage } from '../../util/util.js';
-import { IRespondent, SignUpStatus } from "../../models/respondent.model.js";
+import { IRespondent, IRespondentManager, SignUpStatus } from "../../models/respondent.model.js";
 import { ICompany } from "../../models/company.model.js";
-import { SurveyProgressManager } from "./survey-progress.access.js";
+
+import { ISurveyProgressManager } from '../../models/survey-progress.model.js';
 
 export class SurveyManager extends EntityManager<ISurvey> implements ISurveyManager {
 
     private questionsCache: Partial<Record<TQuestionType, TWithId<IQuestion>[]>> = {};
-    private questionEntityManager: IEntityManager<IQuestion>;
-    private surveyProgressManager: SurveyProgressManager;
-    private respondentManager: RespondentManager;
-    
 
-    constructor(dbClient: MongoClient) {
+    constructor(dbClient: MongoClient,
+        private questionManager: IQuestionManager,
+        private surveyProgressManager: ISurveyProgressManager,
+        private respondentManager: IRespondentManager) {
+
         super(dbClient, 'Surveys');
-        this.questionEntityManager = new EntityManager<IQuestion>(this.dbClient, 'Questions');
-        this.surveyProgressManager = new SurveyProgressManager(this.dbClient);
-        this.respondentManager = new RespondentManager(this.dbClient);
     }
 
     override async findById(_id: TObjectId<ISurvey>): Promise<TWithId<ISurvey>> {
         try {
             const result = await super.findById(_id);
             const questionBodies = await Promise.all(
-                result.questions.map((question: TWithId<{}>) => this.questionEntityManager.findById(question._id))
+                result.questions.map((question: TWithId<{}>) => this.questionManager.findById(question._id))
             );
 
             questionBodies.forEach((question: TWithId<IQuestion>, index) => {
@@ -116,9 +114,9 @@ export class SurveyManager extends EntityManager<ISurvey> implements ISurveyMana
     }
 
     private async loadQuestions() {
-        const questionEntityManager = new EntityManager<IQuestion>(this.dbClient, 'Questions');
+        
         try {
-            const allQuestions = await questionEntityManager.getAll();
+            const allQuestions = await this.questionManager.getAll();
             const types: TQuestionType[] = ['company', 'personal', 'boolean', 'checkbox', 'wall'];
             types.forEach(type => this.questionsCache[type] = allQuestions.filter(el => el.type === type));
         } catch (e) {

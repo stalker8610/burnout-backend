@@ -1,10 +1,8 @@
 import { APIRouter } from "./generic-router.js";
-import { RespondentManager } from "../dal/mongo/respondent.access.js";
-import { dbClient } from "../dal/mongo/core.access.js";
 import { TScopeAccessRules } from "./generic-router.js";
 import { isSelfRequest, isSameCompanyRequest, isSameCompanyRequestGuard, userHasHRScopeGuard } from "./guards.js";
 import { Scopes } from "../models/user.model.js";
-import { TMethodGuards } from "./generic-router.js";
+import { IDomainManagers } from "../models/common.model.js";
 
 const scopeAccessRules: TScopeAccessRules = {
     'GET': {
@@ -33,17 +31,17 @@ const scopeAccessRules: TScopeAccessRules = {
     }
 }
 
-const entityManager = new RespondentManager(dbClient);
+export const getRouter = ({ respondentManager }: Pick<IDomainManagers, 'respondentManager'>) => {
 
-const guards: TMethodGuards = {
+    const router = new APIRouter('/:companyId', respondentManager, scopeAccessRules).getRouter();
+
+    router.post('/:companyId/:_id/deactivate', isSameCompanyRequestGuard, userHasHRScopeGuard, (req, res) => {
+        respondentManager.deactivate(req.params._id)
+            .then(
+                respondent => res.json(respondent),
+                err => res.status(400).send(err)
+            )
+    })
+
+    return router;
 }
-
-export const router = new APIRouter('/:companyId', entityManager, scopeAccessRules).getRouter();
-
-router.post('/:companyId/:_id/deactivate', isSameCompanyRequestGuard, userHasHRScopeGuard, (req, res) => {
-    entityManager.deactivate(req.params._id)
-        .then(
-            respondent => res.json(respondent),
-            err => res.status(400).send(err)
-    )
-})

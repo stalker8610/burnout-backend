@@ -2,5 +2,4 @@
 db.config.json
 server.config.json
 email.config.json
-/dist
-questions*.json
+dist/
